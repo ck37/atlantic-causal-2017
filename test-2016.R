@@ -11,6 +11,10 @@ ck37r::load_all_code("lib", verbose = T)
 # Download from https://drive.google.com/file/d/0B8TUkApaUlsGekFSblJWa25NM1E/edit
 inbound_dir = "inbound/data-2016"
 
+if (!dir.exists(inbound_dir)) {
+  stop(paste("Make sure to download 2016 data to:", inbound_dir))
+}
+
 # Import X data.
 data_x = read.csv(paste0(inbound_dir, "/x.csv"))
 str(data_x)
