@@ -1,3 +1,12 @@
+source("lib/function_library.R")
+
+# Set auto-install to T for code to install any missing packages.
+load_all_packages(auto_install = F,
+                  verbose = T)
+
+# Load all .R files in the lib directory.
+ck37r::load_all_code("lib", verbose = T)
+
 # Assumes 2016 data is extracted to inbound/data-2016/
 # Download from https://drive.google.com/file/d/0B8TUkApaUlsGekFSblJWa25NM1E/edit
 inbound_dir = "inbound/data-2016"
