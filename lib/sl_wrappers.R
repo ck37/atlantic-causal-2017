@@ -1,0 +1,78 @@
+#------- SL wrappers --------
+SL.bart <- function(Y, X, newX, family, printevery = 100000, keeptrainfits = FALSE, ...) {
+  SuperLearner:::.SL.require("dbarts")
+  fit.bart <- bart(x.train = X, y.train = Y, x.test = newX, printevery = printevery, keeptrainfits = keeptrainfits,
+                   printcutoffs = 0, verbose = FALSE)
+  if (family == "gaussian"){
+    pred <- fit.bart$yhat.test.mean
+  } else {
+    pred <- pnorm(colMeans(fit.bart$yhat.test))
+  }
+  fit <- list(object = fit.bart)
+  out <- list(pred = pred, fit = fit)
+  class(out$fit) <- c("SL.dbarts")
+  return(out)
+}
+
+sg.gbm.2500 <- function (Y, X, newX, family, obsWeights, gbm.trees = 2500,
+                         interaction.depth = 2, ...) {
+  SuperLearner:::.SL.require("gbm")
+  gbm.model <- as.formula(paste("Y~", paste(colnames(X), collapse = "+")))
+  if (family$family == "gaussian") {
+    fit.gbm <- gbm(formula = gbm.model, data = X, distribution = "gaussian",
+                   n.trees = gbm.trees, interaction.depth = interaction.depth,
+                   cv.folds = 5, keep.data = TRUE, weights = obsWeights,
+                   verbose = FALSE)
+  }
+  if (family$family == "binomial") {
+    fit.gbm <- gbm(formula = gbm.model, data = X, distribution = "bernoulli",
+                   n.trees = gbm.trees, interaction.depth = interaction.depth,
+                   cv.folds = 5, keep.data = TRUE, verbose = FALSE, class.stratify.cv = TRUE,
+                   weights = obsWeights)
+  }
+  best.iter <- gbm.perf(fit.gbm, method = "cv", plot.it = FALSE)
+  pred <- predict(fit.gbm, newdata = newX, best.iter, type = "response")
+  fit <- list(object = fit.gbm, n.trees = best.iter)
+  out <- list(pred = pred, fit = fit)
+  class(out$fit) <- c("SL.gbm")
+  return(out)
+}
+
+prescreen.nocat <- function(Y, X, ...){
+  whichVariable <- rep(TRUE, NCOL(X))
+  omit <- grep("cat", colnames(X))
+  if(length(omit) > 0){
+    whichVariable[omit] <- FALSE
+  }
+  return(whichVariable)
+}
+
+
+prescreen.nosq <- function(Y, X, ...){
+  whichVariable <- rep(TRUE, NCOL(X))
+  omit <- grep("sq", colnames(X))
+  if(length(omit) > 0){
+    whichVariable[omit] <- FALSE
+  }
+  return(whichVariable)
+}
+
+
+# keep covariates with univariate associations
+prescreen.uni <- function(Y, A, X, alpha = .05, min = 5, ...){
+  pvalues <- rep(NA, ncol(X))
+  for (i in 1:ncol(X)){
+    m <- lm(Y~ A+ X[,i])
+    p <- try(summary(m)$coef[3,4], silent = TRUE)
+    if (class(p) == "try-error") {
+      pvalues[i] <- 1
+    } else {
+      pvalues[i] <- p
+    }
+  }
+  keep <- pvalues <= alpha
+  if(sum(keep) < min){
+    keep[order(pvalues)[1:min]] <- TRUE
+  }
+  return(keep)
+}
