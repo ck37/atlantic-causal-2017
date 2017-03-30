@@ -43,14 +43,19 @@ estimate_att = function(A,
   keep <- which(prescreen.uni(Y, A, W, alpha = .05))
   keep.nonbinary <- nonbinary[nonbinary %in% keep]
 
+  # Initialize to NULL so that cbind() will still work.
+  Wsq = NULL
+
   if (length(keep.nonbinary) > 0) {
-    keep.sq <- keep.nonbinary[prescreen.uni(Y, A, W[,keep.nonbinary, drop = FALSE]^2, min = 0)]
+    keep.sq <- keep.nonbinary[prescreen.uni(Y, A, W[, keep.nonbinary, drop = FALSE]^2, min = 0)]
     if (sum(keep.sq) > 0) {
       Wsq <- W[, keep.sq, drop = FALSE]^2
       colnames(Wsq) <- paste0(colnames(Wsq), "sq")
     }
   }
-  X <- cbind(W[,keep],Wsq)
+
+  # Add squared terms to X.
+  X <- cbind(W[, keep], Wsq)
   n.columns <- ncol(X)
 
   g.SL <- try(SuperLearner(Y = A,
@@ -60,6 +65,9 @@ estimate_att = function(A,
                            cvControl = list(V = V)))
 
   if (class(g.SL) == "try-error") {
+    if (verbose) {
+      cat("SL failed for g, falling back to glm().\n")
+    }
     g1W <- predict(glm(A ~ X, family = "binomial"), type = "response")
   } else {
     g1W <- g.SL$SL.predict
@@ -67,17 +75,22 @@ estimate_att = function(A,
 
   g1W <- .bound(g1W, gbounds)
 
+  # Create indicator for the control group.
   A0 <- A == 0
 
+  # Outcome regression for control units.
   m.SL.A0 <- SuperLearner(Y = Y[A0],
-                          X = as.data.frame(X[A0,]),
+                          X = as.data.frame(X[A0, ]),
+                          # Predicted potential outcome for all observations.
                           newX = as.data.frame(X),
                           SL.library = SL.library,
                           family = family,
                           cvControl = list(V = V))
 
+  # Outcome regression for treated units.
   m.SL.A1 <- SuperLearner(Y = Y[!A0],
                           X = as.data.frame(X[!A0,]),
+                          # Predicted potential outcome for all observations.
                           newX = as.data.frame(X),
                           SL.library = SL.library,
                           family = family,
@@ -87,14 +100,15 @@ estimate_att = function(A,
                   Q0W = m.SL.A0$SL.predict, Q1W = m.SL.A1$SL.predict)
   colnames(Q.unbd) <- c("QAW", "Q0W", "Q1W")
 
-  Q <- .bound((.bound(Q.unbd, c(a,b)) - a) / (b - a), alpha)
+  Q <- .bound((.bound(Q.unbd, c(a, b)) - a) / (b - a), alpha)
 
+  # Fluctuation via the one-step algorithm.
   results.oneStep <- one_step_att(Y = Ystar,
                                   A = A,
                                   Q = Q,
                                   g1W = g1W,
                                   depsilon = depsilon,
-                                  max_iter = max(1000, 2/depsilon),
+                                  max_iter = max(1000, 2 / depsilon),
                                   gbounds = gbounds,
                                   Qbounds = alpha)
 
