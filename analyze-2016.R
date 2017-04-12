@@ -48,6 +48,11 @@ results
 
 analysis = list()
 
+# Temporarily shorten for debugging purposes.
+if (F) {
+  files = files[1:3]
+}
+
 # Run algorithm on each file.
 for (filename in names(files)) {
   cat("Analyzing", filename, "file", which(filename == names(files)), "of",
@@ -59,8 +64,8 @@ for (filename in names(files)) {
 
   # Save data to a temporary csv file for use in the later system2 call.
   # Include covariate data.
-  data = cbind(file, data_x)
-  write.csv(data, file = csv_filename)
+  data = cbind(z = file$data$z, y = file$data$y, data_x)
+  write.csv(data, file = csv_filename, row.names = F)
 
   out1_filename = paste0(conf$data_dir, "/", filename, "-out1.csv")
   out2_filename = paste0(conf$data_dir, "/", filename, "-out2.csv")
