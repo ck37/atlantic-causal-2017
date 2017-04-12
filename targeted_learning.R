@@ -1,5 +1,13 @@
 #!/usr/bin/env Rscript
-####
+
+####################################
+# This script is intended to be run from the command line.
+# Specify the input csv and two output csvs.
+# Example:
+# ./targeted_learning.R input.csv outfile1.csv outfile2.csv
+# outfile1.csv will contain the average treatment effect on the treated.
+# outifle2.csv will contain unit-level treatment effect estimates.
+
 ####################################
 # Based on code by:
 # Susan Gruber and Mark van der Laan
@@ -19,7 +27,7 @@ if (length(args) != 3) {
 source("lib/function_library.R")
 
 # Set auto-install to T for code to install any missing packages.
-load_all_packages(auto_install = F,
+load_all_packages(auto_install = T,
                   verbose = T)
 
 # Load all .R files in the lib directory.
@@ -52,30 +60,38 @@ if (debug) {
   SL.library = c("SL.glm", "SL.mean")
 } else {
   SL.library <- list(c("SL.glm", "All",  "prescreen.nosq"),
-                   c("SL.gam", "All", "prescreen.nosq"),
-                   "SL.glmnet",
-                   c("sg.gbm.2500", "prescreen.nocat"),
-                   c("SL.earth", "prescreen.nosq"),
-                   c("SL.bartMachine", "prescreen.nocat"))
+                     # Not working:
+                     c("SL.gam", "All", "prescreen.nosq"),
+                     c("sg.gbm.2500", "prescreen.nocat"),
+                     "SL.glmnet",
+                     c("SL.earth", "prescreen.nosq"),
+                     c("SL.bartMachine", "prescreen.nocat"),
+                     "SL.mean")
 }
 
-if (debug) {
-  g.SL.library = c("SL.glm", "SL.mean")
-} else {
-  g.SL.library <- list(c("SL.glm", "All", "prescreen.nosq"),
-                     c("sg.gbm.2500", "prescreen.nocat"),
-                     c("SL.gam", "All", "prescreen.nosq"),
-                     c("SL.earth", "prescreen.nosq"),
-                     c("SL.bartMachine", "prescreen.nocat"))
-}
+# Just use the same library for g and Q.
+g.SL.library = SL.library
+
+#if (debug) {
+  #g.SL.library = c("SL.glm", "SL.mean")
+#} else {
+  #g.SL.library <- list(c("SL.glm", "All", "prescreen.nosq"),
+                       #c("sg.gbm.2500", "prescreen.nocat"),
+                       #"SL.glmnet",
+                       # Not working:
+                       #c("SL.gam", "All", "prescreen.nosq"),
+  #                     c("SL.earth", "prescreen.nosq"))#,
+                      # c("SL.bartMachine", "prescreen.nocat"))
+#}
 
 set.seed(10, "L'Ecuyer-CMRG")
 
 results = estimate_att(A = d$A,
-                      Y = d$Y,
-                      W = d[, -(1:2)],
-                      SL.library = SL.library,
-                      g.SL.library = g.SL.library)
+                       Y = d$Y,
+                       W = d[, -(1:2)],
+                       verbose = T,
+                       SL.library = SL.library,
+                       g.SL.library = g.SL.library)
 
 cat("\nResults:\n")
 print(results)
