@@ -7,7 +7,7 @@
 ####################################
 
 # Set to T to use simple SL libraries for testing purposes.
-debug = T
+debug = F
 
 args <- commandArgs(TRUE)
 
@@ -77,6 +77,7 @@ results = estimate_att(A = d$A,
                       SL.library = SL.library,
                       g.SL.library = g.SL.library)
 
+cat("\nResults:\n")
 print(results)
 
 df_result <- data.frame(est = results$est,
