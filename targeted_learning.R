@@ -77,11 +77,14 @@ results = estimate_att(A = d$A,
                       SL.library = SL.library,
                       g.SL.library = g.SL.library)
 
+print(results)
 
 df_result <- data.frame(est = results$est,
                      ci_lower = results$ci_lower,
                      ci_upper = results$ci_upper)
 
 write.csv(df_result, file = outFile1, row.names = FALSE)
+
+# TODO: save unit-level estimates to outFile2.
 
 
