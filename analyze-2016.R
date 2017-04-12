@@ -26,30 +26,10 @@ if (!file.exists(input_file)) {
 
 load(input_file)
 
-# First test on a single file.
-names(files[[1]])
-
-data = files[[1]]$data
-
-q_lib = c("SL.mean", "SL.glmnet")
-g_lib = c("SL.mean", "SL.glmnet")
-
-set.seed(1, "L'Ecuyer-CMRG")
-
-# Takes a minute or so to run.
-results = estimate_att(A = data$z,
-                       Y = data$y,
-                       W = data_x,
-                       SL.library = q_lib,
-                       g.SL.library = g_lib,
-                       verbose = T)
-
-results
-
 analysis = list()
 
 # Temporarily shorten for debugging purposes.
-if (F) {
+if (T) {
   files = files[1:3]
 }
 
@@ -102,7 +82,7 @@ for (filename in names(files)) {
     output_filename = output_filename
   )
 
-  analysis[[filename]]  = results
+  analysis[[filename]] = results
 }
 
 save(analysis, file = paste0(conf$data_dir, "/test-2016.RData"))
