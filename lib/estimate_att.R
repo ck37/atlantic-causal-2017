@@ -17,13 +17,17 @@ estimate_att = function(A,
 
   n <- nrow(W)
 
+  if (verbose) {
+    cat("estimate_att: Preprocessing data.\n")
+  }
+
   # Convert factors to dummies
   W <- model.matrix(~ ., data = W)
 
   # Remove intercept that model.matrix() added.
   W = W[, -1]
 
-  # This isn't general, but true for these data.
+  # SG: This isn't general, but true for these data.
   nonbinary <- which(colMeans(W) > 1)
 
   Wcat <- matrix(as.integer(W[,nonbinary] < rep(colMeans(W[,nonbinary]), each = n)), nrow = n, byrow = FALSE)
@@ -40,6 +44,7 @@ estimate_att = function(A,
   # Rescale Y to [0, 1]
   Ystar <- (Y - a) / (b - a)
 
+  # Prescreening
   keep <- which(prescreen.uni(Y, A, W, alpha = .05))
   keep.nonbinary <- nonbinary[nonbinary %in% keep]
 
@@ -58,9 +63,14 @@ estimate_att = function(A,
   X <- cbind(W[, keep], Wsq)
   n.columns <- ncol(X)
 
+  if (verbose) {
+    cat("\nestimate_att: Estimating g.\n")
+  }
+
   g.SL <- try(SuperLearner(Y = A,
                            X = data.frame(X),
                            SL.library = g.SL.library,
+                           verbose = verbose,
                            family = "binomial",
                            cvControl = list(V = V)))
 
@@ -78,22 +88,34 @@ estimate_att = function(A,
   # Create indicator for the control group.
   A0 <- A == 0
 
+  if (verbose) {
+    cat("\nestimate_att: Estimating control regression.\n")
+  }
+
   # Outcome regression for control units.
+  # TODO: check for errors and fall back to simpler library like we do for g.
   m.SL.A0 <- SuperLearner(Y = Y[A0],
                           X = as.data.frame(X[A0, ]),
                           # Predicted potential outcome for all observations.
                           newX = as.data.frame(X),
                           SL.library = SL.library,
                           family = family,
+                          verbose = verbose,
                           cvControl = list(V = V))
 
+  if (verbose) {
+    cat("\nestimate_att: Estimating treated regression.\n")
+  }
+
   # Outcome regression for treated units.
+  # TODO: check for errors and fall back to simpler library like we do for g.
   m.SL.A1 <- SuperLearner(Y = Y[!A0],
                           X = as.data.frame(X[!A0,]),
                           # Predicted potential outcome for all observations.
                           newX = as.data.frame(X),
                           SL.library = SL.library,
                           family = family,
+                          verbose = verbose,
                           cvControl = list(V = V))
 
   Q.unbd <- cbind(QAW = A * m.SL.A1$SL.predict + (1 - A) * m.SL.A0$SL.predict,
@@ -102,6 +124,10 @@ estimate_att = function(A,
 
   Q <- .bound((.bound(Q.unbd, c(a, b)) - a) / (b - a), alpha)
 
+  if (verbose) {
+    cat("\nestimate_att: fluctuating via one_step_att().\n")
+  }
+
   # Fluctuation via the one-step algorithm.
   results.oneStep <- one_step_att(Y = Ystar,
                                   A = A,
@@ -109,6 +135,7 @@ estimate_att = function(A,
                                   g1W = g1W,
                                   depsilon = depsilon,
                                   max_iter = max(1000, 2 / depsilon),
+                                  verbose = verbose,
                                   gbounds = gbounds,
                                   Qbounds = alpha)
 
