@@ -48,13 +48,13 @@ SL.library <- list(c("SL.glm", "All",  "prescreen.nosq"),
                    "SL.glmnet",
                    c("sg.gbm.2500", "prescreen.nocat"),
                    c("SL.earth", "prescreen.nosq"),
-                   c("SL.bart", "prescreen.nocat"))
+                   c("SL.bartMachine", "prescreen.nocat"))
 
 g.SL.library <- list(c("SL.glm", "All", "prescreen.nosq"),
                      c("sg.gbm.2500", "prescreen.nocat"),
                      c("SL.gam", "All", "prescreen.nosq"),
                      c("SL.earth", "prescreen.nosq"),
-                     c("SL.bart", "prescreen.nocat"))
+                     c("SL.bartMachine", "prescreen.nocat"))
 
 set.seed(10, "L'Ecuyer-CMRG")
 
