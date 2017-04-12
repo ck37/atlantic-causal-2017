@@ -10,6 +10,7 @@ Entry for the Atlantic Causal Inference Conference's 2017 competition
 * Exports - exported files (cvs, tsvs, etc.) that are not tracked via git.
 * Inbound - input datasets that are not tracked via git.
 * Lib - R source code that defines functions; all .R files are loaded.
+* Output - log output files from Savio jobs  etc.
 * Scripts - shell (BASH) scripts.
 * Tex - tex output
 * Writeup - analysis reports and memos
