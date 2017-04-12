@@ -9,11 +9,6 @@ Entry for the Atlantic Causal Inference Conference's 2017 competition
 ## How to run
 
 * Unzip [2016 data](https://drive.google.com/file/d/0B8TUkApaUlsGekFSblJWa25NM1E/edit) into inbound/data-2016/
-* To run analyses without using SLURM job submission, set an environmental variable in BASH (or add to ~/.bashrc):
-
-```bash
-export USE_JOBS=shell
-```
 * Run setup.R to install the necessary packages: `make setup`
 * Run import-2016.R to import the 2016 data: `make import-2016`
 * Run test-2016.R to conduct a single test analysis of 2016: `make test-2016`
