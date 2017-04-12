@@ -9,12 +9,16 @@ SCRIPT_DIR=scripts
 OUTPUT_DIR=output
 
 # How do we want to run tasks? Can be slurm or bash currently.
-# Use SLURM by default, but support running directly in R
-# e.g. we run in BASH: "export USE_JOBS=shell" and code will work on bluevelvet.
-ifndef USE_JOBS
-  # TODO: detect automatically based on sbatch being found in path.
-  # Other possible values: shell
-	USE_JOBS=slurm
+# Use SLURM if possible, otherwise use bash.
+# Can override if desired: "export JOB_ENGINE=shell"
+ifndef JOB_ENGINE
+  # Detect if we can use slurm, otherwise use shell.
+  ifeq (, $(shell which sbatch))
+		JOB_ENGINE=shell
+	else
+		JOB_ENGINE=slurm
+	endif
+	# TODO: check for SGE.
 endif
 
 ########################################
@@ -60,7 +64,7 @@ R=nohup nice -n 19 R CMD BATCH --no-restore --no-save
 
 # Install necessary packages; only needs to be run once per machine.
 setup: setup.R
-ifeq (${USE_JOBS},slurm)
+ifeq (${JOB_ENGINE},slurm)
 	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$< --dir=${OUTPUT_DIR}
 else
 	${R} $< ${OUTPUT_DIR}/$<.out &
@@ -68,7 +72,7 @@ endif
 
 # Import 2016 data.
 import-2016: import-2016.R
-ifeq (${USE_JOBS},slurm)
+ifeq (${JOB_ENGINE},slurm)
 	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$< --dir=${OUTPUT_DIR}
 else
 	${R} $< ${OUTPUT_DIR}/$<.out &
@@ -77,7 +81,7 @@ endif
 # Analyze 2016 data using targeted_learning.R
 # Depends on import-2016.R results.
 analyze-2016: analyze-2016.R
-ifeq (${USE_JOBS},slurm)
+ifeq (${JOB_ENGINE},slurm)
 	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$< --dir=${OUTPUT_DIR}
 else
 	${R} $< ${OUTPUT_DIR}/$<.out &
@@ -86,7 +90,7 @@ endif
 # Test estimate_att() on single 2016 file.
 # Depends on import-2016.R results.
 test-2016: test-2016.R
-ifeq (${USE_JOBS},slurm)
+ifeq (${JOB_ENGINE},slurm)
 	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$< --dir=${OUTPUT_DIR}
 else
 	${R} $< ${OUTPUT_DIR}/$<.out &
