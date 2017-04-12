@@ -60,8 +60,8 @@ if (debug) {
   SL.library = c("SL.glm", "SL.mean")
 } else {
   SL.library <- list(c("SL.glm", "All",  "prescreen.nosq"),
-                     # Not working:
-                     c("SL.gam", "All", "prescreen.nosq"),
+                     # Not working, can we fix it?
+                     # c("SL.gam", "All", "prescreen.nosq"),
                      c("sg.gbm.2500", "prescreen.nocat"),
                      "SL.glmnet",
                      c("SL.earth", "prescreen.nosq"),
