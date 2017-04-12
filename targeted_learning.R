@@ -6,9 +6,15 @@
 # from the 2016 Atlantic Causal Inference competition.
 ####################################
 
+# Set to T to use simple SL libraries for testing purposes.
+debug = T
+
 args <- commandArgs(TRUE)
-if (length(args) != 3)
+
+if (length(args) != 3) {
+  cat("Detected", length(args), "arguments but expected 3.\n")
   stop("usage: targeted_learning.R inFile outFile1 outFile2")
+}
 
 source("lib/function_library.R")
 
@@ -30,7 +36,7 @@ outFile1 <- args[[2]]
 # outfile2 should be for individual treatment effects.
 outFile2 <- args[[2]]
 
-if (!file.exists(inFile)) stop("cannot find '", inFile, "'")
+if (!file.exists(inFile)) stop("Cannot find '", inFile, "'")
 
 d <- read.csv(inFile)
 colnames(d)[1:2] <- c("A", "Y")
@@ -42,19 +48,26 @@ if (!require(earth)) stop("Cannot find package earth")
 #if (!require(BayesTree)) stop("Cannot find package BayesTree")
 #if (!require(dbarts)) stop("Cannot find package dbarts")
 
-
-SL.library <- list(c("SL.glm", "All",  "prescreen.nosq"),
+if (debug) {
+  SL.library = c("SL.glm", "SL.mean")
+} else {
+  SL.library <- list(c("SL.glm", "All",  "prescreen.nosq"),
                    c("SL.gam", "All", "prescreen.nosq"),
                    "SL.glmnet",
                    c("sg.gbm.2500", "prescreen.nocat"),
                    c("SL.earth", "prescreen.nosq"),
                    c("SL.bartMachine", "prescreen.nocat"))
+}
 
-g.SL.library <- list(c("SL.glm", "All", "prescreen.nosq"),
+if (debug) {
+  g.SL.library = c("SL.glm", "SL.mean")
+} else {
+  g.SL.library <- list(c("SL.glm", "All", "prescreen.nosq"),
                      c("sg.gbm.2500", "prescreen.nocat"),
                      c("SL.gam", "All", "prescreen.nosq"),
                      c("SL.earth", "prescreen.nosq"),
                      c("SL.bartMachine", "prescreen.nocat"))
+}
 
 set.seed(10, "L'Ecuyer-CMRG")
 
