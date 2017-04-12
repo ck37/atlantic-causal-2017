@@ -12,6 +12,7 @@ OUTPUT_DIR=output
 # Use SLURM by default, but support running directly in R
 # e.g. we run in BASH: "export USE_JOBS=shell" and code will work on bluevelvet.
 ifndef USE_JOBS
+  # TODO: detect automatically based on sbatch being found in path.
   # Other possible values: shell
 	USE_JOBS=slurm
 endif
@@ -45,6 +46,9 @@ SBATCH=sbatch -A ${ACCOUNT} -p ${PARTITION} --qos ${QOS}
 
 # Setup R to run commands in the background and keep running after logout.
 R=nohup nice -n 19 R CMD BATCH --no-restore --no-save
+
+# TODO: support Sun Grid Engine (SGE) for grizzlybear2.
+# Or just convert to batchtools?
 
 ########################################
 # Tasks that can be run.
