@@ -15,7 +15,9 @@ conf = list(
   # Subdirectory to save temporary csv files.
   data_dir = "data",
   # Subdirectory to save output logs.
-  output_dir = "output"
+  output_dir = "output",
+  # Subdirectory to save exported csv files that are the result of analysis.
+  export_dir = "exports"
 )
 
 input_file = paste0(conf$data_dir, "/import-2016.RData")
@@ -47,8 +49,8 @@ for (filename in names(files)) {
   data = cbind(z = file$data$z, y = file$data$y, data_x)
   write.csv(data, file = csv_filename, row.names = F)
 
-  out1_filename = paste0(conf$data_dir, "/", filename, "-out1.csv")
-  out2_filename = paste0(conf$data_dir, "/", filename, "-out2.csv")
+  out1_filename = paste0(conf$export_dir, "/", filename, "-out1.csv")
+  out2_filename = paste0(conf$export_dir, "/", filename, "-out2.csv")
   output_filename = paste0(conf$output_dir, "/", filename, ".out")
 
   # Run targeted_learner.R as a shell script to generate output.
