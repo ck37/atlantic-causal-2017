@@ -33,6 +33,19 @@ OUTPUT_DIR=output
 #data-prep: 1-data-prep.Rmd
 #	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-rmd.sh --file=$< --dir=${OUTPUT_DIR}
 
+# Example job:
+setup: setup.R
+	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$< --dir=${OUTPUT_DIR}
+
+# Import 2016 data.
+import-2016: import-2016.R
+	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$< --dir=${OUTPUT_DIR}
+
+# Test command-line execution on 2016 data.
+# Depends on import-2016.R results.
+test-2016: test-2016.R
+	${SBATCH} --nodes 1 --job-name=$< ${SCRIPT_DIR}/sbatch-r.sh --file=$< --dir=${OUTPUT_DIR}
+
 # Start a bash session with 2 nodes, for up to 12 hours.
 bash:
 	srun -A ${ACCOUNT} -p ${PARTITION} -N 2 -t 12:00:00 --pty bash
