@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+*.out
 
 # macOS files
 .DS_Store
