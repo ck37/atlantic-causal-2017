@@ -14,7 +14,7 @@ load_all_packages = function(auto_install = F, update = F, java_mem = "4g", verb
   options(java.parameters = paste0("-Xmx", java_mem))
 
   libs = c(
-    "bartMachine",
+    # "bartMachine",
     "caret",
     "doMC",
     "doParallel",
