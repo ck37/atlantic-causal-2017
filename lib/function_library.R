@@ -14,6 +14,7 @@ load_all_packages = function(auto_install = F, update = F, java_mem = "4g", verb
   options(java.parameters = paste0("-Xmx", java_mem))
 
   libs = c(
+    # Warning: This will crash R if a JDK is not installed.
     "bartMachine",
     "caret",
     "doMC",
