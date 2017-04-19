@@ -56,13 +56,18 @@ if (!require(earth)) stop("Cannot find package earth")
 #if (!require(BayesTree)) stop("Cannot find package BayesTree")
 #if (!require(dbarts)) stop("Cannot find package dbarts")
 
+# TODO: setup parallelization? Use up to 4 cores.
+
+# This is the Q and g library.
 if (debug) {
   SL.library = c("SL.glm", "SL.mean")
 } else {
   SL.library <- list(c("SL.glm", "All",  "prescreen.nosq"),
                      # Not working, can we fix it?
                      # c("SL.gam", "All", "prescreen.nosq"),
-                     c("sg.gbm.2500", "prescreen.nocat"),
+                     #c("sg.gbm.2500", "prescreen.nocat"),
+                     "SL.xgboost",
+                     "SL.randomForest",
                      "SL.glmnet",
                      c("SL.earth", "prescreen.nosq"),
                      c("SL.bartMachine", "prescreen.nocat"),
