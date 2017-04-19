@@ -21,8 +21,10 @@ initdata = data.frame(A=A,Y=Y,Q0W=Q0W,g=g)
 # takes initdata, dataframe or list containing elements, Q0W,Y,g,A 
 update <- function(initdata) {
   H = with(initdata, (A==0)*g/(mean(A)*(1-g)))
+  # fit a glm with the weight
   fit = glm(Y ~ offset(qlogis(Q0W)),
                weights=H,family="binomial")
+  # update with the negative weighted average as per the eIC
   Q0Wstar = with(initdata, qlogis(plogis(Q0W-fit$coef)))
   return(Q0Wstar)
 }
