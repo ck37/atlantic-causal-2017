@@ -24,8 +24,8 @@ update <- function(initdata) {
   # fit a glm with the weight
   fit = glm(Y ~ offset(qlogis(Q0W)),
                weights=H,family="binomial")
-  # update with the negative weighted average as per the eIC
-  Q0Wstar = with(initdata, qlogis(plogis(Q0W-fit$coef)))
+  # update
+  Q0Wstar = with(initdata, qlogis(plogis(Q0W+fit$coef)))
   return(Q0Wstar)
 }
 
