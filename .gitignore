@@ -3,6 +3,7 @@
 .RData
 .Ruserdata
 *.out
+exports/*.csv
 
 # macOS files
 .DS_Store
