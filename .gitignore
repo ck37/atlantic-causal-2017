@@ -3,6 +3,8 @@
 .RData
 .Ruserdata
 *.out
+exports/*.csv
+xgboost.model
 
 # macOS files
 .DS_Store

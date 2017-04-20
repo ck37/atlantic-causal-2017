@@ -14,8 +14,19 @@
 # from the 2016 Atlantic Causal Inference competition.
 ####################################
 
-# Set to T to use simple SL libraries for testing purposes.
-debug = F
+conf = list(
+  # Set to T for extra output during execution.
+  verbose = T,
+
+  # Set auto-install to T for code to install any missing packages.
+  auto_install = F,
+
+  # Set to T to use simple SL libraries for testing purposes.
+  debug = F,
+
+  # Use up to this many cores if available.
+  max_cores = 4
+)
 
 args <- commandArgs(TRUE)
 
@@ -26,12 +37,10 @@ if (length(args) != 3) {
 
 source("lib/function_library.R")
 
-# Set auto-install to T for code to install any missing packages.
-load_all_packages(auto_install = T,
-                  verbose = T)
+load_all_packages(auto_install = conf$auto_install, verbose = conf$verbose)
 
 # Load all .R files in the lib directory.
-ck37r::load_all_code("lib", verbose = T)
+ck37r::load_all_code("lib", verbose = conf$verbose)
 
 ##############################
 # Parse command-line arguments.
@@ -56,13 +65,31 @@ if (!require(earth)) stop("Cannot find package earth")
 #if (!require(BayesTree)) stop("Cannot find package BayesTree")
 #if (!require(dbarts)) stop("Cannot find package dbarts")
 
-if (debug) {
+# Setup parallelization? Use up to 4 cores.
+num_cores = RhpcBLASctl::get_num_cores()
+
+if (conf$verbose) {
+  cat("Cores detected:", num_cores, "\n")
+}
+
+use_cores = min(num_cores, conf$max_cores)
+options("mc.cores" = use_cores)
+
+if (conf$verbose) {
+  # Check how many parallel workers we are using:
+  cat("Cores used:", getOption("mc.cores"), "\n")
+}
+
+# This is the Q and g library.
+if (conf$debug) {
   SL.library = c("SL.glm", "SL.mean")
 } else {
   SL.library <- list(c("SL.glm", "All",  "prescreen.nosq"),
                      # Not working, can we fix it?
                      # c("SL.gam", "All", "prescreen.nosq"),
-                     c("sg.gbm.2500", "prescreen.nocat"),
+                     #c("sg.gbm.2500", "prescreen.nocat"),
+                     "SL.xgboost",
+                     "SL.randomForest",
                      "SL.glmnet",
                      c("SL.earth", "prescreen.nosq"),
                      c("SL.bartMachine", "prescreen.nocat"),
@@ -72,7 +99,7 @@ if (debug) {
 # Just use the same library for g and Q.
 g.SL.library = SL.library
 
-#if (debug) {
+#if (conf$debug) {
   #g.SL.library = c("SL.glm", "SL.mean")
 #} else {
   #g.SL.library <- list(c("SL.glm", "All", "prescreen.nosq"),
@@ -89,7 +116,7 @@ set.seed(10, "L'Ecuyer-CMRG")
 results = estimate_att(A = d$A,
                        Y = d$Y,
                        W = d[, -(1:2)],
-                       verbose = T,
+                       verbose = conf$verbose,
                        SL.library = SL.library,
                        g.SL.library = g.SL.library)
 
