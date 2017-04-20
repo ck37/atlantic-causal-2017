@@ -26,7 +26,7 @@ update <- function(initdata) {
                weights=H,family="binomial")
 
   # update yo momma
-
+  
   Q0Wstar = with(initdata, qlogis(plogis(Q0W+fit$coef)))
   return(Q0Wstar)
 }
