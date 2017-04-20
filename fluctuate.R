@@ -24,11 +24,9 @@ update <- function(initdata) {
   # fit a glm with the weight
   fit = glm(Y ~ offset(qlogis(Q0W)),
                weights=H,family="binomial")
-<<<<<<< HEAD
+
   # update yo momma
-=======
-  # update - test of the merge conflict resolution
->>>>>>> e27b931fa4faa3fbce8ed155259c14edf648c611
+
   Q0Wstar = with(initdata, qlogis(plogis(Q0W+fit$coef)))
   return(Q0Wstar)
 }
