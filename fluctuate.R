@@ -25,7 +25,7 @@ update <- function(initdata) {
   fit = glm(Y ~ offset(qlogis(Q0W)),
                weights=H,family="binomial")
 
-  # update yo momma
+  # update yo yo ma
 
   Q0Wstar = with(initdata, qlogis(plogis(Q0W+fit$coef)))
   return(Q0Wstar)
