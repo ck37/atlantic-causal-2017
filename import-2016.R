@@ -42,3 +42,4 @@ names(files)
 # Save current results
 save(files, file_names, data_x,
      file = paste0(conf$data_dir, "/import-2016.RData"))
+

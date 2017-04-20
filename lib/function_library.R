@@ -31,6 +31,7 @@ load_all_packages = function(auto_install = F, update = F, java_mem = "4g", verb
     "mgcv",
     "pROC",
     "randomForest",
+    "RhpcBLASctl",
     "ROCR",
     "rpart",
     "xgboost",

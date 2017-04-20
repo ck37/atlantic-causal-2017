@@ -67,7 +67,7 @@ estimate_att = function(A,
     cat("\nestimate_att: Estimating g.\n")
   }
 
-  g.SL <- try(SuperLearner(Y = A,
+  g.SL <- try(mcSuperLearner(Y = A,
                            X = data.frame(X),
                            SL.library = g.SL.library,
                            verbose = verbose,
@@ -94,7 +94,7 @@ estimate_att = function(A,
 
   # Outcome regression for control units.
   # TODO: check for errors and fall back to simpler library like we do for g.
-  m.SL.A0 <- SuperLearner(Y = Y[A0],
+  m.SL.A0 <- mcSuperLearner(Y = Y[A0],
                           X = as.data.frame(X[A0, ]),
                           # Predicted potential outcome for all observations.
                           newX = as.data.frame(X),
@@ -109,7 +109,7 @@ estimate_att = function(A,
 
   # Outcome regression for treated units.
   # TODO: check for errors and fall back to simpler library like we do for g.
-  m.SL.A1 <- SuperLearner(Y = Y[!A0],
+  m.SL.A1 <- mcSuperLearner(Y = Y[!A0],
                           X = as.data.frame(X[!A0,]),
                           # Predicted potential outcome for all observations.
                           newX = as.data.frame(X),
