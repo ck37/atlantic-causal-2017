@@ -61,8 +61,8 @@ sim_fluctuate = function(n){
   
   # scale the outcome back 
   Psi=(b-a)*Psi
-  PsiLS=(b-a)*PsiLS
-  return(c(Psi_0=Psi_0,Psi=Psi,PsiLS = PsiLS))
+  # PsiLS=(b-a)*PsiLS
+  return(c(Psi_0=Psi_0,Psi=Psi))
 }
 
 # run B sims of n=1000 compile results
@@ -70,9 +70,9 @@ B=200
 n=1000
 res=mclapply(1:B,FUN = function(x) sim_fluctuate(1000),mc.cores=4)
 res=t(sapply(res,FUN=function(x) x))
-colnames(res)=c("true","logistic","ols")
+colnames(res)=c("true","tmle")
 
 # we can see if there's a difference, should be very little 
-df=data.frame(type=c(rep("true",B),rep("logistic",B),rep("ols",B)),est=c(res[,1],res[,2],res[,3])) 
+df=data.frame(type=c(rep("true",B),rep("tmle",B)),est=c(res[,1],res[,2])) 
 gghist = ggplot(df,aes(x=est,fill=type))+geom_density(alpha=.3) 
 gghist
