@@ -18,12 +18,17 @@ mean((big$Y-min(big$Y))/(max(big$Y)-min(big$Y)))
 # define custom logistic reg objective (log lik loss)
 logregobj <- function(preds, dtrain) { 
   labels <- getinfo(dtrain, "label") 
+  
+  # interestingly, the model constraint by the logistic function not present here
+  # if I don't transform and then try log-lik loss it is less stable due to the
+  # xgboost starting point, perhaps, gives similar results to logistic
+  
+  # grad <- -labels/preds-(labels-1)/(1-preds)
+  # hess <- labels/preds^2-(labels-1)/(1-preds)^2
+  
   preds <- 1/(1+exp(-preds))
-  # grad <- labels/preds+(Y-1)/(1-preds)
-  # hess <- -Y/preds^2+(Y-1)/(1-preds)^2
   grad <- preds - labels
   hess <- preds * (1 - preds)
-  grad <- 
   return(list(grad = grad, hess = hess)) }
 
 # eval error can be any good error function to compare models
@@ -53,21 +58,29 @@ bst_leastsq <- xgb.train(param_leastsq, data=dtest, nrounds = 1000, maximize  =F
 # compare yhat with Y
 yhat_logistic= predict(bst_logistic, dtest)
 yhat_logistic1= plogis(predict(bst_logistic1, dtest))
+# yhat_logistic1= predict(bst_logistic1, dtest)
 yhat_leastsqLinear= predict(bst_leastsqLinear, dtest)
 yhat_leastsq= predict(bst_leastsq, dtest)
 
 # results are very similar here but somehow the handmade logistic regression is slightly different
+
+# built-in logistic
 mean(yhat_logistic)
+
+# hard coded
 mean(yhat_logistic1)
+
 mean(yhat_leastsqLinear)
 mean(yhat_leastsq)
 
+# very close to each other--hard coded vs built-in logistic
 hist(yhat_logistic-yhat_logistic1,breaks=100)
+
 hist(yhat_logistic-yhat_leastsq,breaks=100)
 hist(yhat_logistic1-yhat_leastsq,breaks=100)
 hist(yhat_leastsqLinear-yhat_leastsq,breaks=100)
 
 # anything with trees respects param bounds but linear regression does not
-test_maxmin = data.frame(true_Yminmax=c(min(Y),max(Y)),leastsq_Yminmax=c(min(yhat_leastsq),max(yhat_leastsq)),
-                         leastsqLinear_Yminmax=c(min(yhat_leastsqLinear),max(yhat_leastsqLinear)))
+test_maxmin = data.frame(true_Yminmax=c(a,b),leastsq_Yminmax=c((b-a)*min(yhat_leastsq)+a,(b-a)*max(yhat_leastsq)+a),
+                         leastsqLinear_Yminmax=c(min((b-a)*yhat_leastsqLinear)+a,(b-a)*max(yhat_leastsqLinear)+a))
 test_maxmin
