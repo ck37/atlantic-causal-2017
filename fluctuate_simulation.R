@@ -1,9 +1,11 @@
 source("fluctuate.R")
+library(ggplot2)
+library(parallel)
 
 # generate conditional means
 Q0=function(A,W1,W2,W3,W4) return(A+2*A*W4+3*W1+1*W2^2+.5*W3*W4+.25*W4)
-Q0=function(A,W1,W2,W3,W4) return(A+3*A*W4^2+.63*W1+1*W2^2+A*.5*cos(W3)+.1*W4*W1)
-g0=function(W1,W2,W3,W4) {plogis(-.28*W1+.1*W2+.08*W3+1*W4-1)}
+Q0=function(A,W1,W2,W3,W4) return(15*A*(W4<-1)+1*A*(W3^2<1)+.63*W1+1*W2^2+A*.5*cos(W3)+.1*W4*W1+A*(W2>1))
+g0=function(W1,W2,W3,W4) {plogis(-.28*W1+5*W2^2*W4+.08*W3+5*abs(W4)-1)}
 
 # random draw of sample size n--continuous unscaled Y
 gendata=function(n){
