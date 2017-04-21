@@ -2,7 +2,7 @@ source("fluctuate.R")
 
 # generate conditional means
 Q0=function(A,W1,W2,W3,W4) return(A+2*A*W4+3*W1+1*W2^2+.5*W3*W4+.25*W4)
-Q0=function(A,W1,W2,W3,W4) return(A+2*A*W4^2+.63*W1+1*W2^2+A*.5*cos(W3)+.25*W4)
+Q0=function(A,W1,W2,W3,W4) return(A+3*A*W4^2+.63*W1+1*W2^2+A*.5*cos(W3)+.1*W4*W1)
 g0=function(W1,W2,W3,W4) {plogis(-.28*W1+.1*W2+.08*W3+1*W4-1)}
 
 # random draw of sample size n--continuous unscaled Y
@@ -62,7 +62,7 @@ sim_fluctuate = function(n){
   # scale the outcome back 
   Psi=(b-a)*Psi
   PsiLS=(b-a)*PsiLS
-  return(c(Psi=Psi,PsiLS = PsiLS))
+  return(c(Psi_0=Psi_0,Psi=Psi,PsiLS = PsiLS))
 }
 
 # run B sims of n=1000 compile results
@@ -70,9 +70,9 @@ B=200
 n=1000
 res=mclapply(1:B,FUN = function(x) sim_fluctuate(1000),mc.cores=4)
 res=t(sapply(res,FUN=function(x) x))
-colnames(res)=c("logistic","ols")
+colnames(res)=c("true","logistic","ols")
 
 # we can see if there's a difference, should be very little 
-df=data.frame(type=c(rep("logistic",B),rep("ols",B)),est=c(res[,1],res[,2])) 
-gghist = ggplot(df,aes(x=est,fill=type))+geom_density(alpha=.5) 
+df=data.frame(type=c(rep("true",B),rep("logistic",B),rep("ols",B)),est=c(res[,1],res[,2],res[,3])) 
+gghist = ggplot(df,aes(x=est,fill=type))+geom_density(alpha=.3) 
 gghist

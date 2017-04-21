@@ -24,7 +24,7 @@ updateLS <- function(initdata) {
   fit = glm(Y ~ offset(Q0W),data=initdata,
             weights=H,family="gaussian")
   
-  # update yo momma
+  # update and truncate to prevent overstepping outcome bounds
   Q0Wstar = with(initdata, truncate(Q0W+fit$coef,lower=1e-4))
   return(Q0Wstar)
 }
