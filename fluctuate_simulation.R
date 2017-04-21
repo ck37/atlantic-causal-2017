@@ -55,7 +55,7 @@ sim_fluctuate = function(n){
   Q0Wstar = suppressWarnings(update(initdata))
   Psi = with(initdata,1/sum(A)*sum((A==1)*(Y-Q0Wstar)))
   
-  # fluctuate by least squares regression
+  # fluctuate by least squares regression--either fluc is fine for simulations
   Q0WstarLS = updateLS(initdata)
   PsiLS = with(initdata,1/sum(A)*sum((A==1)*(Y-Q0WstarLS)))
   
