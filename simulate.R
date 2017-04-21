@@ -19,7 +19,7 @@ gendata=function(n){
 }
 
 # function just to give estimates for now
-sim_fluctuate = function(n){
+sim_ATT = function(n){
   
   # draw sample
   data = gendata(n)
@@ -68,7 +68,7 @@ sim_fluctuate = function(n){
 # run B sims of n=1000 compile results
 B=200
 n=1000
-res=mclapply(1:B,FUN = function(x) sim_fluctuate(1000),mc.cores=4)
+res=mclapply(1:B,FUN = function(x) sim_ATT(1000),mc.cores=4)
 res=t(sapply(res,FUN=function(x) x))
 colnames(res)=c("true","tmle")
 
