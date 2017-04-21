@@ -3,12 +3,14 @@ W = rnorm(1000)
 A = rbinom(1000,1,plogis(W+.4))
 Y = rnorm(1000,.1*A+W^2+10*(W>1),2)
 Y = (Y-min(Y))/(max(Y)-min(Y))
+# Y = rbinom(1000,1,plogis(.1*A+W^2+10*(W>1)))
 m = matrix(c(W,A,Y), ncol=3)
 colnames(m)=c("W","A","Y")
 
 # define custom logistic reg objective (log lik loss)
 logregobj <- function(preds, dtrain) { 
   labels <- getinfo(dtrain, "label") 
+  # preds <- 1/(1+exp(-preds))
   grad <- preds-labels
   hess <- preds * (1 - preds)
   return(list(grad = grad, hess = hess)) }
@@ -34,7 +36,7 @@ bst_leastsq <- xgb.train(param_leastsq, data=dtest, nrounds = 1000, maximize  =F
 
 # compare yhat with Y
 yhat_logistic= predict(bst_logistic, dtest, type='response')
-yhat_logistic1= predict(bst_logistic1, dtest, type='response')
+yhat_logistic1= predict(bst_logistic1, dtest,type='response')
 yhat_leastsq= predict(bst_leastsq, dtest, type='response')
 
 # results are very similar here but somehow the handmade logistic regression is slightly different
