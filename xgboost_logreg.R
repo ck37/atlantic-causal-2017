@@ -1,5 +1,6 @@
 # Generate data
 Q0=function(A,W1,W2,W3,W4) return(A+2*A*W4+3*W1+1*W2^2+.5*W3*W4+.25*W4)
+Q0=function(A,W1,W2,W3,W4) return(A+2*A*W4+.63*W1+1*W2^3+A*.5*cos(W3)+.25*W4)
 g0=function(W1,W2,W3,W4) {plogis(-.28*W1+1*W2+.08*W3-.12*W4-1)}
 
 gendata=function(n){
@@ -81,6 +82,9 @@ hist(yhat_logistic1-yhat_leastsq,breaks=100)
 hist(yhat_leastsqLinear-yhat_leastsq,breaks=100)
 
 # anything with trees respects param bounds but linear regression does not
-test_maxmin = data.frame(true_Yminmax=c(a,b),leastsq_Yminmax=c((b-a)*min(yhat_leastsq)+a,(b-a)*max(yhat_leastsq)+a),
-                         leastsqLinear_Yminmax=c(min((b-a)*yhat_leastsqLinear)+a,(b-a)*max(yhat_leastsqLinear)+a))
-test_maxmin
+test_maxmin = data.frame(sampleY=c(a,b),logistic=c(min((b-a)*yhat_logistic)+a,(b-a)*max(yhat_logistic)+a),
+                         logistic1=c(min((b-a)*yhat_logistic1)+a,(b-a)*max(yhat_logistic1)+a),
+                         leastsq=c((b-a)*min(yhat_leastsq)+a,(b-a)*max(yhat_leastsq)+a),
+                         leastsqLinear=c(min((b-a)*yhat_leastsqLinear)+a,(b-a)*max(yhat_leastsqLinear)+a))
+rownames(test_maxmin)=c("min","max")
+t(test_maxmin)
