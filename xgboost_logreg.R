@@ -1,18 +1,29 @@
 # Generate data
-W = rnorm(1000)
-A = rbinom(1000,1,plogis(W+.4))
-Y = rnorm(1000,.1*A+W^2+10*(W>1),2)
-Y = (Y-min(Y))/(max(Y)-min(Y))
-# Y = rbinom(1000,1,plogis(.1*A+W^2+10*(W>1)))
-m = matrix(c(W,A,Y), ncol=3)
-colnames(m)=c("W","A","Y")
+Q0=function(A,W1,W2,W3,W4) return(A+2*A*W4+3*W1+1*W2^2+.5*W3*W4+.25*W4)
+g0=function(W1,W2,W3,W4) {plogis(-.28*W1+1*W2+.08*W3-.12*W4-1)}
+
+gendata=function(n){
+  U1 = runif(n,0,1)
+  W1= -1*(U1<=.5)+(U1>.5)
+  W2=rnorm(n)
+  W3=rnorm(n)
+  W4=rnorm(n)
+  A=rbinom(n,1,g0(W1,W2,W3,W4))
+  Y=rnorm(n,Q0(A,W1,W2,W3,W4),2)
+  data.frame(A,W1,W2,W3,W4,Y)
+}
+big = gendata(1000000)
+mean((big$Y-min(big$Y))/(max(big$Y)-min(big$Y)))
 
 # define custom logistic reg objective (log lik loss)
 logregobj <- function(preds, dtrain) { 
   labels <- getinfo(dtrain, "label") 
-  # preds <- 1/(1+exp(-preds))
-  grad <- preds-labels
+  preds <- 1/(1+exp(-preds))
+  # grad <- labels/preds+(Y-1)/(1-preds)
+  # hess <- -Y/preds^2+(Y-1)/(1-preds)^2
+  grad <- preds - labels
   hess <- preds * (1 - preds)
+  grad <- 
   return(list(grad = grad, hess = hess)) }
 
 # eval error can be any good error function to compare models
@@ -22,8 +33,11 @@ evalerror <- function(preds, dtrain) {
   err <- sqrt(mean((preds-labels)^2))
   return(list(metric = "MSE", value = err)) }
 
-# set up their matrix object
-dtest <- xgb.DMatrix(m[,1:2], label = m[,"Y"])
+# set up their matrix object, notice scaled continuous Y
+m=as.matrix(gendata(1000))
+a = min(m[,"Y"])
+b = max(m[,"Y"])
+dtest <- xgb.DMatrix(m[,1:5], label = (m[,"Y"]-a)/(b-a))
 # hyperparams, also note two examples below give same answer so not necessary to program it
 # can use built-in function "binary:logistic" to override default "reg:linear"
 param_logistic <- list(max_depth = 2, eta = .01, silent = 1, objective = "binary:logistic")
@@ -37,10 +51,10 @@ bst_leastsqLinear <- xgb.train(param_leastsqLinear, data=dtest, nrounds = 1000, 
 bst_leastsq <- xgb.train(param_leastsq, data=dtest, nrounds = 1000, maximize  =FALSE,watchlist=list())
 
 # compare yhat with Y
-yhat_logistic= predict(bst_logistic, dtest, type='response')
-yhat_logistic1= predict(bst_logistic1, dtest,type='response')
-yhat_leastsqLinear= predict(bst_leastsqLinear, dtest, type='response')
-yhat_leastsq= predict(bst_leastsq, dtest, type='response')
+yhat_logistic= predict(bst_logistic, dtest)
+yhat_logistic1= plogis(predict(bst_logistic1, dtest))
+yhat_leastsqLinear= predict(bst_leastsqLinear, dtest)
+yhat_leastsq= predict(bst_leastsq, dtest)
 
 # results are very similar here but somehow the handmade logistic regression is slightly different
 mean(yhat_logistic)
