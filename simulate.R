@@ -17,7 +17,8 @@ gendata=function(n){
   A=rbinom(n,1,g0(W1,W2,W3,W4))
   Y=rnorm(n,Q0(A,W1,W2,W3,W4),2)
   Q0Wtrue = Q0(A=rep(0,n),W1,W2,W3,W4)
-  data.frame(A,W1,W2,W3,W4,Y,Q0Wtrue)
+  Q1Wtrue = Q0(A=rep(1,n),W1,W2,W3,W4)
+  data.frame(A,W1,W2,W3,W4,Y,Q0Wtrue,Q1Wtrue)
 }
 
 # function just to give estimates for now
@@ -28,13 +29,13 @@ sim_ATT = function(n){
   
   # Truth
   Q0Wtrue = data$Q0Wtrue 
-  Psi_0 = sum((data$A==1)*(data$Y-Q0Wtrue))/sum(data$A==1)
+  Psi_0 = sum((data$A==1)*(data$Q1Wtrue-Q0Wtrue))/sum(data$A==1)
   
   # max and mins for scaling, adjust Y
   a = min(data$Y)
   b = max(data$Y)
   data$Y = (data$Y-a)/(b-a)
-  data$Q0Wtrue = NULL
+  data$Q0Wtrue = data$Q1Wtrue = NULL
   
   # covariates including A
   X= data

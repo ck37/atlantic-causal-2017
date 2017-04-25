@@ -76,5 +76,8 @@ colnames(res)=c("true","logistic","ols")
 
 # we can see if there's a difference, should be very little 
 df=data.frame(type=c(rep("true",B),rep("logistic",B),rep("ols",B)),est=c(res[,1],res[,2],res[,3])) 
-gghist = ggplot(df,aes(x=est,fill=type))+geom_density(alpha=.3) 
+bins=50
+e = (max(df$est)-min(df$est))/bins
+
+gghist = ggplot(df,aes(x=est,fill=type))+geom_density(alpha=.3)+xlim(14.7,16.5)
 gghist
