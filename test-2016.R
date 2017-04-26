@@ -77,3 +77,5 @@ results$unit_estimates = NULL
 results
 
 summary(unit_estimates)
+
+# TODO: test command-line version like in analyze-2016.R
