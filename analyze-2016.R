@@ -53,6 +53,8 @@ for (filename in names(files)) {
   out2_filename = paste0(conf$export_dir, "/", filename, "-out2.csv")
   output_filename = paste0(conf$output_dir, "/", filename, ".out")
 
+  cat("Log filename:", output_filename, "\n")
+
   # Run targeted_learner.R as a shell script to generate output.
   time_start = proc.time()
 
