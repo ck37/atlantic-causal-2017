@@ -21,15 +21,15 @@ if (!dir.exists(conf$inbound_dir)) {
 }
 
 # Import X data.
-data_x = read.csv(paste0(conf$inbound_dir, "/x.csv"))
+data_x = read.csv(paste0(conf$inbound_dir, "/x.csv"), header = F)
 str(data_x)
 
 # Import X_Z data.
-data_x_z = read.csv(paste0(conf$inbound_dir, "/X_subset_z.csv"))
+data_x_z = read.csv(paste0(conf$inbound_dir, "/X_subset_z.csv"), header = F)
 str(data_x_z)
 
 # Import X_Y data.
-data_x_y = read.csv(paste0(conf$inbound_dir, "/X_subset_y.csv"))
+data_x_y = read.csv(paste0(conf$inbound_dir, "/X_subset_y.csv"), header = F)
 str(data_x_y)
 
 # Loop over 64 outcome / treatment files and combine into separate input datasets.
