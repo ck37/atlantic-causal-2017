@@ -24,6 +24,9 @@ conf = list(
   # Set to T to use simple SL libraries for testing purposes.
   debug = T,
 
+  # Set to F to disable parallelism.
+  parallel = F,
+
   # Use up to this many cores if available.
   max_cores = 4
 )
@@ -51,7 +54,7 @@ inFile <- args[[1]]
 outFile1 <- args[[2]]
 
 # outfile2 should be for individual treatment effects.
-outFile2 <- args[[2]]
+outFile2 <- args[[3]]
 
 if (!file.exists(inFile)) stop("Cannot find '", inFile, "'")
 
@@ -118,10 +121,19 @@ results = estimate_att(A = d$A,
                        W = d[, -(1:2)],
                        verbose = conf$verbose,
                        SL.library = SL.library,
+                       parallel = conf$parallel,
                        g.SL.library = g.SL.library)
+
+
+# Extract unit-level estimates before printing.
+unit_estimates = results$unit_estimates
+results$unit_estimates = NULL
 
 cat("\nResults:\n")
 print(results)
+
+cat("\nSummary of unit-level estimates:\n")
+print(summary(unit_estimates))
 
 df_result <- data.frame(est = results$est,
                      ci_lower = results$ci_lower,
@@ -131,5 +143,5 @@ df_result <- data.frame(est = results$est,
 write.csv(df_result, file = outFile1, row.names = FALSE)
 
 # Save unit-level estimates to outFile2.
-write.csv(results$unit_estimates, file = outFile2, row.names = FALSE)
+write.csv(unit_estimates, file = outFile2, row.names = FALSE)
 
