@@ -22,7 +22,7 @@ conf = list(
   auto_install = F,
 
   # Set to T to use simple SL libraries for testing purposes.
-  debug = F,
+  debug = T,
 
   # Use up to this many cores if available.
   max_cores = 4
@@ -127,8 +127,9 @@ df_result <- data.frame(est = results$est,
                      ci_lower = results$ci_lower,
                      ci_upper = results$ci_upper)
 
+# Save point estimates and CI to outFile1
 write.csv(df_result, file = outFile1, row.names = FALSE)
 
-# TODO: save unit-level estimates to outFile2.
-
+# Save unit-level estimates to outFile2.
+write.csv(results$unit_estimates, file = outFile2, row.names = FALSE)
 
