@@ -9,6 +9,8 @@ estimate_att = function(A,
                         gbounds = c(0.01, 0.99),
                         depsilon =  0.001,
                         V = 5,
+                        # Set to F to disable parallelism.
+                        parallel = T,
                         alpha = c(.0005, .9995),
                         verbose = F
                         ) {
@@ -16,6 +18,14 @@ estimate_att = function(A,
   time_start = proc.time()
 
   n <- nrow(W)
+
+  if (parallel) {
+    if (verbose) cat("estimate_att: Using mcSuperLearner\n")
+    sl_fn = mcSuperLearner
+  } else {
+    if (verbose) cat("estimate_att: Using SuperLearner\n")
+    sl_fn = SuperLearner
+  }
 
   if (verbose) {
     cat("estimate_att: Preprocessing data.\n")
@@ -67,12 +77,14 @@ estimate_att = function(A,
     cat("\nestimate_att: Estimating g.\n")
   }
 
-  g.SL <- try(mcSuperLearner(Y = A,
-                           X = data.frame(X),
-                           SL.library = g.SL.library,
-                           verbose = verbose,
-                           family = "binomial",
-                           cvControl = list(V = V)))
+
+
+  g.SL <- try(sl_fn(Y = A,
+                    X = data.frame(X),
+                    SL.library = g.SL.library,
+                    verbose = verbose,
+                    family = "binomial",
+                    cvControl = list(V = V)))
 
   if (class(g.SL) == "try-error") {
     if (verbose) {
@@ -94,7 +106,7 @@ estimate_att = function(A,
 
   # Outcome regression for control units.
   # TODO: check for errors and fall back to simpler library like we do for g.
-  m.SL.A0 <- mcSuperLearner(Y = Y[A0],
+  m.SL.A0 <- sl_fn(Y = Y[A0],
                           X = as.data.frame(X[A0, ]),
                           # Predicted potential outcome for all observations.
                           newX = as.data.frame(X),
@@ -109,14 +121,14 @@ estimate_att = function(A,
 
   # Outcome regression for treated units.
   # TODO: check for errors and fall back to simpler library like we do for g.
-  m.SL.A1 <- mcSuperLearner(Y = Y[!A0],
-                          X = as.data.frame(X[!A0,]),
-                          # Predicted potential outcome for all observations.
-                          newX = as.data.frame(X),
-                          SL.library = SL.library,
-                          family = family,
-                          verbose = verbose,
-                          cvControl = list(V = V))
+  m.SL.A1 <- sl_fn(Y = Y[!A0],
+                   X = as.data.frame(X[!A0,]),
+                   # Predicted potential outcome for all observations.
+                   newX = as.data.frame(X),
+                   SL.library = SL.library,
+                   family = family,
+                   verbose = verbose,
+                   cvControl = list(V = V))
 
   Q.unbd <- cbind(QAW = A * m.SL.A1$SL.predict + (1 - A) * m.SL.A0$SL.predict,
                   Q0W = m.SL.A0$SL.predict, Q1W = m.SL.A1$SL.predict)
@@ -129,6 +141,7 @@ estimate_att = function(A,
   }
 
   # Fluctuation via the one-step algorithm.
+  # TODO: convert this to an interated TMLE fluctuation.
   results.oneStep <- one_step_att(Y = Ystar,
                                   A = A,
                                   Q = Q,
@@ -145,6 +158,26 @@ estimate_att = function(A,
   # Convert se back to original scale.
   se <- sqrt(results.oneStep[2]) * (b - a)
 
+  ##############
+  # Unit-level estimate uses observed outcome and the complementary modeled outcome.
+
+  # NOTE: if we fit a pooled outcome regression for both treatment & control,
+  # we should update this to not use separate models for A1 and A0.
+
+  # Best Y1 is observed Y if A = 1 and SL.predict otherwise.
+  best_y1 = A * Y + (1 - A) * m.SL.A1$SL.predict
+
+  # Best Y0 is observed Y if A = 0 and SL.predict otherwise.
+  best_y0 = (1 - A) * Y + A * m.SL.A0$SL.predict
+
+  # Difference is our unit-level estimated treatment effect.
+  # These are already unscaled so we don't need to multiply by (b - a)
+  unit_est = best_y1 - best_y0
+
+  # Compile unit-level effects, preferable with a ci_lower and ci_upper.
+  unit_estimates = data.frame(est = unit_est,
+                              ci_lower = NA,
+                              ci_upper = NA)
 
   time_end = proc.time()
 
@@ -153,6 +186,7 @@ estimate_att = function(A,
                  b = b,
                  a = a,
                  ci_lower = est - 1.96 * se,
+                 unit_estimates = unit_estimates,
                  ci_upper = est + 1.96 * se,
                  time = time_end - time_start)
   return(results)
