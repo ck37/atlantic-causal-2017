@@ -12,7 +12,9 @@ estimate_att = function(A,
                         # Set to F to disable parallelism.
                         parallel = T,
                         alpha = c(.0005, .9995),
-                        verbose = F
+                        verbose = F,
+                        #Added optional prescreening: (0,0) if you don't want it 
+                        prescreen=c(0.25, 9)
                         ) {
 
   time_start = proc.time()
@@ -39,13 +41,11 @@ estimate_att = function(A,
 
   # SG: This isn't general, but true for these data.
   nonbinary <- which(colMeans(W) > 1)
-
+  
   Wcat <- matrix(as.integer(W[,nonbinary] < rep(colMeans(W[,nonbinary]), each = n)), nrow = n, byrow = FALSE)
   colnames(Wcat) <- paste0(colnames(W[,nonbinary]), "cat")
 
-  W <- cbind(W, x_3aug = as.integer(W[,"x_3"] > 0), x_4aug = as.integer(W[,"x_4"] > 0),
-            Wcat
-  )
+  W <- cbind(W, x_3aug = as.integer(W[,"x_3"] > 0), x_4aug = as.integer(W[,"x_4"] > 0), Wcat)
 
   #  Identify range of outcome variable.
   a <- min(Y)
@@ -55,29 +55,37 @@ estimate_att = function(A,
   Ystar <- (Y - a) / (b - a)
 
   # Prescreening
-  keep <- which(prescreen.uni(Y, A, W, alpha = .05))
-  keep.nonbinary <- nonbinary[nonbinary %in% keep]
+  
+  #Make prescreening optional
+  if (sum(prescreen)>0) {
+    if (verbose) cat("Keep covariates with univariate associations. \n")
+    
+    keep <- which(prescreen.uni(Y, A, W, alpha = prescreen[1], min=prescreen[2]))
+    keep.nonbinary <- nonbinary[nonbinary %in% keep]
 
-  # Initialize to NULL so that cbind() will still work.
-  Wsq = NULL
-
-  if (length(keep.nonbinary) > 0) {
-    keep.sq <- keep.nonbinary[prescreen.uni(Y, A, W[, keep.nonbinary, drop = FALSE]^2, min = 0)]
-    if (sum(keep.sq) > 0) {
-      Wsq <- W[, keep.sq, drop = FALSE]^2
-      colnames(Wsq) <- paste0(colnames(Wsq), "sq")
+    # Initialize to NULL so that cbind() will still work.
+    Wsq = NULL
+    
+    if (length(keep.nonbinary) > 0) {
+      keep.sq <- keep.nonbinary[prescreen.uni(Y, A, W[, keep.nonbinary, drop = FALSE]^2, alpha=prescreen[1], min = 0)]
+      if (sum(keep.sq) > 0) {
+        Wsq <- W[, keep.sq, drop = FALSE]^2
+        colnames(Wsq) <- paste0(colnames(Wsq), "sq")
+      }
     }
+    
+    # Add squared terms to X.
+    X <- cbind(W[, keep], Wsq)
+    n.columns <- ncol(X)
+    
+  } else {
+    if (verbose) cat("Keep all covariates. \n")
+    X<-W
   }
-
-  # Add squared terms to X.
-  X <- cbind(W[, keep], Wsq)
-  n.columns <- ncol(X)
-
+  
   if (verbose) {
     cat("\nestimate_att: Estimating g.\n")
   }
-
-
 
   g.SL <- try(sl_fn(Y = A,
                     X = data.frame(X),
