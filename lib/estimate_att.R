@@ -8,7 +8,7 @@ estimate_att = function(A,
                         g.SL.library,
                         gbounds = c(0.01, 0.99),
                         depsilon =  0.001,
-                        V = 5,
+                        V = 10,
                         # Set to F to disable parallelism.
                         parallel = T,
                         alpha = c(.0005, .9995),
