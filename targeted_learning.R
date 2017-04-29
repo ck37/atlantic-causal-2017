@@ -22,7 +22,7 @@ conf = list(
   auto_install = F,
 
   # Set to T to use simple SL libraries for testing purposes.
-  debug = T,
+  debug = F,
 
   # Set to F to disable parallelism.
   parallel = F,
@@ -59,6 +59,9 @@ outFile2 <- args[[3]]
 if (!file.exists(inFile)) stop("Cannot find '", inFile, "'")
 
 d <- read.csv(inFile)
+
+# The first column is treatment indicator A and the second column is the
+# continuous outcome.
 colnames(d)[1:2] <- c("A", "Y")
 
 if (!require(SuperLearner)) stop("Cannot find package SuperLearner")
