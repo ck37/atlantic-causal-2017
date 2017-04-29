@@ -77,8 +77,6 @@ estimate_att = function(A,
     cat("\nestimate_att: Estimating g.\n")
   }
 
-
-
   g.SL <- try(sl_fn(Y = A,
                     X = data.frame(X),
                     SL.library = g.SL.library,
@@ -87,11 +85,15 @@ estimate_att = function(A,
                     cvControl = list(V = V)))
 
   if (class(g.SL) == "try-error") {
+    # TODO: fall back to a simpler SL algorithm before using glm().
     if (verbose) {
       cat("SL failed for g, falling back to glm().\n")
     }
     g1W <- predict(glm(A ~ X, family = "binomial"), type = "response")
   } else {
+    cat("Propensity score SuperLearner results:\n")
+    print(g.SL)
+
     g1W <- g.SL$SL.predict
   }
 
@@ -104,16 +106,25 @@ estimate_att = function(A,
     cat("\nestimate_att: Estimating control regression.\n")
   }
 
+  # TODO: convert these two to a pooled regression.
+
   # Outcome regression for control units.
   # TODO: check for errors and fall back to simpler library like we do for g.
-  m.SL.A0 <- sl_fn(Y = Y[A0],
-                          X = as.data.frame(X[A0, ]),
-                          # Predicted potential outcome for all observations.
-                          newX = as.data.frame(X),
-                          SL.library = SL.library,
-                          family = family,
-                          verbose = verbose,
-                          cvControl = list(V = V))
+  m.SL.A0 <- try(sl_fn(Y = Y[A0],
+                       X = as.data.frame(X[A0, ]),
+                       # Predicted potential outcome for all observations.
+                       newX = as.data.frame(X),
+                       SL.library = SL.library,
+                       family = family,
+                       verbose = verbose,
+                       cvControl = list(V = V)))
+
+  if (class(m.SL.A0) != "try-error") {
+    cat("Outcome regression for controls:\n")
+    print(m.SL.A0)
+  } else {
+    cat("Outcome regression for controls failed!")
+  }
 
   if (verbose) {
     cat("\nestimate_att: Estimating treated regression.\n")
@@ -130,8 +141,16 @@ estimate_att = function(A,
                    verbose = verbose,
                    cvControl = list(V = V))
 
+  if (class(m.SL.A1) != "try-error") {
+    cat("Outcome regression for treatment:\n")
+    print(m.SL.A1)
+  } else {
+    cat("Outcome regression for treatment failed!")
+  }
+
   Q.unbd <- cbind(QAW = A * m.SL.A1$SL.predict + (1 - A) * m.SL.A0$SL.predict,
-                  Q0W = m.SL.A0$SL.predict, Q1W = m.SL.A1$SL.predict)
+                  Q0W = m.SL.A0$SL.predict,
+                  Q1W = m.SL.A1$SL.predict)
   colnames(Q.unbd) <- c("QAW", "Q0W", "Q1W")
 
   Q <- .bound((.bound(Q.unbd, c(a, b)) - a) / (b - a), alpha)
@@ -189,5 +208,6 @@ estimate_att = function(A,
                  unit_estimates = unit_estimates,
                  ci_upper = est + 1.96 * se,
                  time = time_end - time_start)
+
   return(results)
 }
