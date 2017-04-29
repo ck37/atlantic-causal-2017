@@ -8,11 +8,11 @@ truncate <- function(x, lower = 0.01, upper = 1 - lower) {
 update <- function(initdata) {
   H = with(initdata, (A==0)*g/(mean(A)*(1-g)))
   # fit a glm with the weight
-  fit = glm(Y ~ offset(qlogis(Q0W)),data=initdata,
-               weights=H,family="binomial")
-
+  fit = glm(Y ~ offset(qlogis(Q0W)),weights= H, data=initdata,family="binomial")
+  
+  eps = fit$coefficients[1]
   # update
-  Q0Wstar = with(initdata, plogis(qlogis(Q0W)+fit$coef))
+  Q0Wstar = with(initdata, plogis(qlogis(Q0W)+eps))
   return(Q0Wstar)
 }
 
