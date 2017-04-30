@@ -23,55 +23,55 @@ gendata=function(n){
 }
 
 # function just to give estimates for now
-sim_fluctuate = function(n){
-  
+sim_fluctuate = function(n) {
+
   # draw sample
   data = gendata(n)
-  
+
   # Truth
-  Q0Wtrue = data$Q0Wtrue 
+  Q0Wtrue = data$Q0Wtrue
   Q1Wtrue = data$Q1Wtrue
-  Psi_0 = sum((data$A==1)*(Q1Wtrue-Q0Wtrue))/sum(data$A==1)
-  
+  Psi_0 = sum((data$A == 1) * (Q1Wtrue - Q0Wtrue)) / sum(data$A == 1)
+
   # max and mins for scaling, adjust Y
   a = min(data$Y)
   b = max(data$Y)
-  data$Y = (data$Y-a)/(b-a)
+  data$Y = (data$Y - a) / (b - a)
   data$Q0Wtrue = NULL
-  
+
   # covariates including A
-  X= data
+  X = data
   X$Y = NULL
-  
+
   # fits
-  QAWfit = suppressWarnings(glm(Y~.,data=data,family='binomial'))
-  gfit = glm(A~.,data=X, family='binomial')
-  
+  QAWfit = suppressWarnings(glm(Y ~ ., data = data, family = 'binomial'))
+  gfit = glm(A ~ ., data = X, family = 'binomial')
+
   # predict Q0W and g
   X0 = data
   X0$A = 0
-  Q0W = suppressWarnings(predict(QAWfit,newdata=X0,type='response'))
-  g = predict(gfit, type='response')
-  
+  Q0W = suppressWarnings(predict(QAWfit , newdata = X0, type = 'response'))
+  g = predict(gfit, type = 'response')
+
   # put in data.frame or list
-  initdata = data.frame(Q0W=Q0W,Y=data$Y,g=g,A=data$A)
-  
+  initdata = data.frame(Q0W = Q0W, Y = data$Y, g = g, A = data$A)
+
   # fluctuate by logistic regression
-  Q0Wstar = suppressWarnings(update(initdata))
-  Psi = with(initdata,1/sum(A)*sum((A==1)*(Y-Q0Wstar)))
-  
-  
-  
+  update_results = suppressWarnings(update(initdata))
+  Q0Wstar = update_results$Q0Wstar
+
+  Psi = with(initdata, 1 / sum(A) * sum((A == 1) * (Y - Q0Wstar)))
+
   # fluctuate by least squares regression--either fluc is fine for simulations
   # Q0WstarLS = updateLS(initdata)
   # PsiLS = with(initdata,1/sum(A)*sum((A==1)*(Y-Q0WstarLS)))
-  
-  # scale the outcome back 
-  Psi=(b-a)*Psi
+
+  # scale the outcome back
+  Psi = (b - a) * Psi
   # PsiLS=(b-a)*PsiLS
-  
-  Psi_0<=Psi
-  return(c(Psi_0=Psi_0,Psi=Psi))
+
+  Psi_0 <= Psi
+  return(c(Psi_0 = Psi_0, Psi = Psi))
 }
 
 # run B sims of n=1000 compile results
@@ -81,8 +81,8 @@ res=mclapply(1:B,FUN = function(x) sim_fluctuate(1000),mc.cores=4)
 res=t(sapply(res,FUN=function(x) x))
 colnames(res)=c("true","logistic")
 
-# we can see if there's a difference, should be very little 
-df=data.frame(type=c(rep("true",B),rep("logistic",B)),est=c(res[,1],res[,2])) 
+# we can see if there's a difference, should be very little
+df=data.frame(type=c(rep("true",B),rep("logistic",B)),est=c(res[,1],res[,2]))
 bins=50
 e = (max(df$est)-min(df$est))/bins
 
