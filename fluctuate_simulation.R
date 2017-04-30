@@ -91,7 +91,7 @@ set.seed(101, "L'Ecuyer-CMRG")
 # run B sims of n=1000 compile results
 B = 200
 n = 1000
-res = mclapply(1:B, FUN = function(x) sim_fluctuate(1000), mc.cores = 4)
+res = mclapply(1:B, FUN = function(x) sim_fluctuate(n), mc.cores = 4)
 
 if (F) {
   # Non-parallel version for running manually if desired.
