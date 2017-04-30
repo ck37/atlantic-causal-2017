@@ -11,9 +11,10 @@ estimate_att = function(A,
                         V = 10,
                         # Set to F to disable parallelism.
                         parallel = T,
+                        # Bounds used for Y when rescaled to [0, 1].
                         alpha = c(.0005, .9995),
                         verbose = F,
-                        #Added optional prescreening: (0,0) if you don't want it 
+                        #Added optional prescreening: (0,0) if you don't want it
                         prescreen=c(0.25, 9)
                         ) {
 
@@ -41,7 +42,7 @@ estimate_att = function(A,
 
   # SG: This isn't general, but true for these data.
   nonbinary <- which(colMeans(W) > 1)
-  
+
   Wcat <- matrix(as.integer(W[,nonbinary] < rep(colMeans(W[,nonbinary]), each = n)), nrow = n, byrow = FALSE)
   colnames(Wcat) <- paste0(colnames(W[,nonbinary]), "cat")
 
@@ -55,17 +56,17 @@ estimate_att = function(A,
   Ystar <- (Y - a) / (b - a)
 
   # Prescreening
-  
+
   #Make prescreening optional
   if (sum(prescreen)>0) {
     if (verbose) cat("Keep covariates with univariate associations. \n")
-    
+
     keep <- which(prescreen.uni(Y, A, W, alpha = prescreen[1], min=prescreen[2]))
     keep.nonbinary <- nonbinary[nonbinary %in% keep]
 
     # Initialize to NULL so that cbind() will still work.
     Wsq = NULL
-    
+
     if (length(keep.nonbinary) > 0) {
       keep.sq <- keep.nonbinary[prescreen.uni(Y, A, W[, keep.nonbinary, drop = FALSE]^2, alpha=prescreen[1], min = 0)]
       if (sum(keep.sq) > 0) {
@@ -73,16 +74,16 @@ estimate_att = function(A,
         colnames(Wsq) <- paste0(colnames(Wsq), "sq")
       }
     }
-    
+
     # Add squared terms to X.
     X <- cbind(W[, keep], Wsq)
     n.columns <- ncol(X)
-    
+
   } else {
     if (verbose) cat("Keep all covariates. \n")
     X<-W
   }
-  
+
   if (verbose) {
     cat("\nestimate_att: Estimating g.\n")
   }
@@ -107,6 +108,7 @@ estimate_att = function(A,
     g1W <- g.SL$SL.predict
   }
 
+  # Bound g away from 0, 1.
   g1W <- .bound(g1W, gbounds)
 
   # Create indicator for the control group.
@@ -119,6 +121,7 @@ estimate_att = function(A,
   # TODO: convert these two to a pooled regression.
 
   # Outcome regression for control units.
+  # Note that we are modeling Y (original scale) rather than Ystar (scaled).
   # TODO: check for errors and fall back to simpler library like we do for g.
   m.SL.A0 <- try(sl_fn(Y = Y[A0],
                        X = as.data.frame(X[A0, ]),
@@ -141,6 +144,7 @@ estimate_att = function(A,
   }
 
   # Outcome regression for treated units.
+  # Note that we are modeling Y (original scale) rather than Ystar (scaled)
   # TODO: check for errors and fall back to simpler library like we do for g.
   m.SL.A1 <- sl_fn(Y = Y[!A0],
                    X = as.data.frame(X[!A0,]),
@@ -163,7 +167,11 @@ estimate_att = function(A,
                   Q1W = m.SL.A1$SL.predict)
   colnames(Q.unbd) <- c("QAW", "Q0W", "Q1W")
 
-  Q <- .bound((.bound(Q.unbd, c(a, b)) - a) / (b - a), alpha)
+  # Bound Q on the original scale.
+  Q_orig_scale = .bound(Q.unbd, c(a, b))
+
+  # Then convert to [0, 1] scale and bound within alpha away from 0, 1.
+  Q <- .bound((Q_orig_scale - a) / (b - a), alpha)
 
   if (verbose) {
     cat("\nestimate_att: fluctuating via one_step_att().\n")
