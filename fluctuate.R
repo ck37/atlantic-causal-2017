@@ -22,8 +22,20 @@ update <- function(initdata) {
     warning("Epsilon hat estimated to be zero.")
   }
 
+  if (is.na(epsilon_hat)) {
+    warning("Epsilon hat is NA.")
+  }
+
   # Update estimated Q(0, W) - we only care about the treated units though.
   Q0Wstar = with(initdata, plogis(qlogis(Q0W) + epsilon_hat))
+
+  num_nas = sum(is.na(Q0Wstar))
+  if (num_nas > 0) {
+    cat("Updated Q0Wstar num NAs is:", num_nas, "\n")
+    print(summary(initdata$Q0W))
+    print(summary(qlogis(initdata$Q0W)))
+    cat("Epsilon hat:", epsilon_hat, "\n")
+  }
 
   # Calculate percentage of treated units that changed after fluctuation update.
   pct_changed = mean(initdata$Q0W[initdata$A == 1] != Q0Wstar[initdata$A == 1])
