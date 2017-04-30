@@ -92,3 +92,6 @@ for (filename in names(files)) {
 }
 
 save(analysis, file = paste0(conf$data_dir, "/test-2016.RData"))
+
+cat("Average minutes per analysis:",
+    round(mean(unlist(lapply(analysis, function(x) x$time[["elapsed"]])) / 60, 2)))
