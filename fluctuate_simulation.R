@@ -2,7 +2,6 @@ source("fluctuate.R")
 library(ggplot2)
 library(parallel)
 
-set.seed(101)
 # generate conditional means
 Q0=function(A,W1,W2,W3,W4) return(A+2*A*W4+3*W1+1*W2^2+.5*W3*W4+.25*W4)
 Q0=function(A,W1,W2,W3,W4) return(15*A*(W4<-1)+1*A*(W3^2<1)+.63*W1+1*W2^2+A*.5*cos(W3)+.1*W4*W1+A*(W2>1))
@@ -32,19 +31,24 @@ sim_fluctuate = function(n) {
   # Truth
   Q0Wtrue = data$Q0Wtrue
   Q1Wtrue = data$Q1Wtrue
+
+  # Target parameter: sample average treatment on treated units (SATT).
   Psi_0 = sum((data$A == 1) * (Q1Wtrue - Q0Wtrue)) / sum(data$A == 1)
 
-  # max and mins for scaling, adjust Y
+  # Max and min for scaling Y.
   a = min(data$Y)
   b = max(data$Y)
+
+  # Scale Y to [0, 1] interval.
   data$Y = (data$Y - a) / (b - a)
+
   data$Q0Wtrue = NULL
 
-  # covariates including A
+  # Covariates including A.
   X = data
   X$Y = NULL
 
-  # Estimate outcome under observed treatment status.
+  # Estimate smoothed outcome under observed treatment status.
   QAWfit = suppressWarnings(glm(Y ~ ., data = data, family = 'binomial'))
 
   # Estimate propensity score.
@@ -73,13 +77,16 @@ sim_fluctuate = function(n) {
   # Q0WstarLS = updateLS(initdata)
   # PsiLS = with(initdata,1/sum(A)*sum((A==1)*(Y-Q0WstarLS)))
 
-  # scale the outcome back
+  # Return parameter estimate to original scale.
   Psi = (b - a) * Psi
   # PsiLS=(b-a)*PsiLS
 
   Psi_0 <= Psi
   return(c(Psi_0 = Psi_0, Psi = Psi))
 }
+
+# Set multicore-compatible seed.
+set.seed(101, "L'Ecuyer-CMRG")
 
 # run B sims of n=1000 compile results
 B = 200
@@ -101,6 +108,6 @@ df = data.frame(type = c(rep("true", B), rep("logistic", B)),
 bins = 50
 e = (max(df$est) - min(df$est)) / bins
 
-gghist = ggplot(df,aes(x = est, fill = type)) +
+gghist = ggplot(df, aes(x = est, fill = type)) +
   geom_density(alpha = .3) + theme_minimal()
 gghist

@@ -4,10 +4,10 @@ truncate <- function(x, lower = 0.01, upper = 1 - lower) {
 }
 
 
-# takes initdata, dataframe or list containing elements, Q0W,Y,g,A
+# Takes initdata, dataframe or list containing elements: Q0W, Y, g, A
 update <- function(initdata) {
 
-  # Create clever covariate, which is 0 for treatment units.
+  # Create clever covariate, which is 0 for treated units.
   H = with(initdata, (A == 0) * g / (mean(A) * (1 - g)))
 
   # Fit a glm putting the clever covariate in the weight.
