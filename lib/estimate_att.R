@@ -80,7 +80,13 @@ estimate_att = function(A,
     
   } else {
     if (verbose) cat("Keep all covariates. \n")
-    X<-W
+    
+    Wsq <- W^2
+    colnames(Wsq) <- paste0(colnames(Wsq), "sq")
+    
+    # Add squared terms to X.
+    X<-cbind(W, Wsq)
+    n.columns <- ncol(X)
   }
   
   if (verbose) {
