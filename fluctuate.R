@@ -4,15 +4,19 @@ truncate <- function(x, lower = 0.01, upper = 1 - lower) {
 }
 
 
-# Takes initdata, dataframe or list containing elements: Q0W, Y, g, A
+# Takes initdata, dataframe or list containing elements: Q0W, Q1W, Y, g, A
 update <- function(initdata) {
 
   # Create clever covariate, which is 0 for treated units.
-  H = with(initdata, (A == 0) * g / (mean(A) * (1 - g)))
+  H0W = with(initdata, (- g / (1 - g)) / mean(A))
+  H1W = with(initdata, 1 / mean(A))
+  HAW = with(initdata, ifelse(A == 1, H1W, H0W))
+  
+  QAW = with(initdata, ifelse(A == 1, Q1W, Q0W))
 
-  # Fit a glm putting the clever covariate in the weight.
-  fit = glm(Y ~ offset(qlogis(Q0W)),
-            weights = H, data = initdata,
+  # Fit a glm with H as clever covariate.
+  fit = glm(Y ~ offset(qlogis(QAW)) + HAW - 1,
+            data = initdata,
             family = "binomial")
 
   # Extract epsilon from the MLE.
@@ -26,19 +30,24 @@ update <- function(initdata) {
     warning("Epsilon hat is NA.")
   }
 
-  # Update estimated Q(0, W) - we only care about the treated units though.
-  Q0Wstar = with(initdata, plogis(qlogis(Q0W) + epsilon_hat))
+  # Update estimated Q(0, W) and Q(A, W)
+  Q0Wstar = with(initdata, plogis(qlogis(Q0W) + epsilon_hat * H0W))
+  Q1Wstar = with(initdata, plogis(qlogis(Q1W) + epsilon_hat * H1W))
 
-  num_nas = sum(is.na(Q0Wstar))
-  if (num_nas > 0) {
-    cat("Updated Q0Wstar num NAs is:", num_nas, "\n")
+  num_nas0 = sum(is.na(Q0Wstar))
+  num_nas1 = sum(is.na(Q1Wstar))
+  if (num_nas0 + num_nas1 > 0) {
+    cat("Updated Q0Wstar num NAs is:", num_nas0, "\n","Updated Q1Wstar num NAs is:", num_nas1, "\n")
     print(summary(initdata$Q0W))
+    print(summary(initdata$Q1W))
     print(summary(qlogis(initdata$Q0W)))
+    print(summary(qlogis(initdata$Q1W)))
     cat("Epsilon hat:", epsilon_hat, "\n")
   }
 
   # Calculate percentage of treated units that changed after fluctuation update.
-  pct_changed = mean(initdata$Q0W[initdata$A == 1] != Q0Wstar[initdata$A == 1])
+  pct_changed = mean(initdata$Q0W[initdata$A == 1] != Q0Wstar[initdata$A == 1] |
+                       initdata$Q1W[initdata$A == 1] != Q1Wstar[initdata$A == 1])
 
   # If the treated units didn't change there is some sort of issue.
   if (pct_changed == 0) {
@@ -47,6 +56,7 @@ update <- function(initdata) {
 
   # Compile results.
   results = list(Q0Wstar = Q0Wstar,
+                 Q1Wstar = Q1Wstar,
                  pct_changed = pct_changed,
                  epsilon_hat = epsilon_hat)
 

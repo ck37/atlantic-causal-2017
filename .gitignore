@@ -5,6 +5,7 @@
 *.out
 exports/*.csv
 xgboost.model
+SATT/*
 
 # macOS files
 .DS_Store

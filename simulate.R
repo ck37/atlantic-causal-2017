@@ -2,6 +2,8 @@ source("fluctuate.R")
 source("lib/bound.R")
 library(ggplot2)
 library(parallel)
+library(SuperLearner)
+library(glmnet)
 
 # generate conditional means
 
@@ -118,6 +120,23 @@ sim_ATT = function(n,
       cat("Found", num_nas, "missing values in Q0W after SL.\n")
     }
   }
+  
+  # Predict Q1W with all units set to A = treated.
+  data1 = X
+  data1$A = 1
+  
+  if (!useSL) {
+    Q1W = suppressWarnings(predict(QAWfit, newdata = data1, type = 'response'))
+  } else {
+    cat("QAWfit from SL:\n")
+    print(QAWfit)
+    Q1W = predict(QAWfit, newdata = data1, onlySL = T)$pred
+    
+    num_nas = sum(is.na(Q1W))
+    if (num_nas > 0) {
+      cat("Found", num_nas, "missing values in Q1W after SL.\n")
+    }
+  }
 
   # NOTE: change this bounding below if Q0W is modeled on Ystar rather than Y.
 
@@ -125,9 +144,11 @@ sim_ATT = function(n,
   # with linear terms.
   # Here we bound to the original scale.
   Q0W_orig_scale = .bound(Q0W, c(a, b))
+  Q1W_orig_scale = .bound(Q1W, c(a, b))
 
   # Rescale to [0, 1] and bound away from 0, 1 by alpha.
   Q0W = .bound((Q0W_orig_scale - a) / (b - a), alpha)
+  Q1W = .bound((Q1W_orig_scale - a) / (b - a), alpha)
 
   # TODO: confirm Q0W is within [0, 1].
 
@@ -142,15 +163,17 @@ sim_ATT = function(n,
   g = .bound(g, gbounds)
 
   # Compile columns needed for fluctuation step. Here we use Ystar (rescaled).
-  initdata = data.frame(A = data$A, Y = Ystar, Q0W = Q0W, g = g)
+  initdata = data.frame(A = data$A, Y = Ystar, Q0W = Q0W, Q1W = Q1W, g = g)
 
   # Fluctuate by logistic regression.
   update_results = suppressWarnings(update(initdata))
   Q0Wstar = update_results$Q0Wstar
+  Q1Wstar = update_results$Q1Wstar
+  QAWstar = with(initdata, ifelse(A == 1, Q1Wstar, Q0Wstar))
 
-  Psi = with(initdata, sum((A == 1) * (Ystar - Q0Wstar)) / sum(A))
+  Psi = with(initdata, sum((A == 1) * (Q1Wstar - Q0Wstar)) / sum(A))
 
-  Dstar = with(data, (A == 0) * g / (mean(A) * (1 - g)) * (Ystar - Q0Wstar))
+  Dstar = with(data, ((A == 1) - (A == 0) * g / (1 - g)) / mean(A) * (Ystar - QAWstar))
 
   num_nas = sum(is.na(Dstar))
   if (num_nas > 0) {
@@ -169,7 +192,7 @@ sim_ATT = function(n,
   Psi = (b - a) * Psi
 
   # Calculate confidence interval.
-  CI = Psi + c(-1, 1) * 1.96 * std_err
+  CI = Psi + c(-1, 1) * qnorm(.975) * std_err
 
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= CI[1]) && (Psi_0 <= CI[2])
@@ -193,7 +216,7 @@ B = 1000
 n = 1000
 
 # Takes only a few seconds.
-res = mclapply(1:B, FUN = function(x) sim_ATT(n), mc.cores = 4)
+res = mclapply(1:B, FUN = function(x) sim_ATT(n, useSL = FALSE), mc.cores = 4)
 
 if (F) {
   # Run non-parallel version manually if extra output is useful.
@@ -230,4 +253,4 @@ df=data.frame(type=c(rep("true",B),rep("tmle",B)),est=c(res[,1],res[,2]))
 gghist = ggplot(df,aes(x=est,fill=type))+geom_density(alpha=.3)
 gghist
 
-hist((res[,2]-res[,1]),breaks=100)
+hist((res[,2]-res[,1]))
