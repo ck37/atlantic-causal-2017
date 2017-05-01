@@ -11,10 +11,13 @@ ck37r::load_all_code("lib", verbose = T)
 # Download from https://drive.google.com/file/d/0B8TUkApaUlsGekFSblJWa25NM1E/edit
 conf = list(
   inbound_dir = "inbound/data-2016",
+
   # Subdirectory to save temporary csv files.
   data_dir = "data",
+
   # Subdirectory to save output logs.
   output_dir = "output",
+
   # Subdirectory to save exported csv files that are the result of analysis.
   export_dir = "exports"
 )
@@ -89,3 +92,6 @@ for (filename in names(files)) {
 }
 
 save(analysis, file = paste0(conf$data_dir, "/test-2016.RData"))
+
+cat("Average minutes per analysis:",
+    round(mean(unlist(lapply(analysis, function(x) x$time[["elapsed"]])) / 60, 2)))
