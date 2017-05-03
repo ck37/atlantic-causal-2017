@@ -20,17 +20,17 @@ Q0=function(A,W1,W2,W3,W4) return(A-2*W3+3*W1+1*W2+.25*W4)
 gendata = function(n) {
 
   U1 = runif(n,0,1)
-  W1= -1*(U1<=.5)+(U1>.5)
-  W2=rnorm(n)
-  W3=rnorm(n)
-  W4=rnorm(n)
-  A=rbinom(n,1,g0(W1,W2,W3,W4))
-  Y=rnorm(n,Q0(A,W1,W2,W3,W4),2)
+  W1 = -1*(U1<=.5) + (U1>.5)
+  W2 = rnorm(n)
+  W3 = rnorm(n)
+  W4 = rnorm(n)
+  A = rbinom(n,1,g0(W1,W2,W3,W4))
+  Y = rnorm(n,Q0(A,W1,W2,W3,W4),2)
   mean(Q0(A,W1,W2,W3,W4))
   mean(Y)
-  Q0Wtrue = Q0(A=rep(0,n),W1,W2,W3,W4)
-  Q1Wtrue = Q0(A=rep(1,n),W1,W2,W3,W4)
-  data.frame(A,W1,W2,W3,W4,Y,Q0Wtrue,Q1Wtrue)
+  Q0Wtrue = Q0(A = rep(0, n),W1,W2,W3,W4)
+  Q1Wtrue = Q0(A = rep(1, n),W1,W2,W3,W4)
+  data.frame(A, W1, W2, W3, W4, Y, Q0Wtrue, Q1Wtrue)
 }
 
 # function just to give estimates for now
@@ -44,6 +44,7 @@ sim_ATT = function(n,
                    # SL library for outcome regression (Qbar).
                    SL.library = c("SL.mean", "SL.glmnet",
                                   "SL.glm"#,
+                                  #"SL.bartMachine"#,
                                  # "SL.ranger"#,
                                   #"SL.xgboost",
                                   #"SL.speedglm"
@@ -215,8 +216,9 @@ set.seed(1, "L'Ecuyer-CMRG")
 B = 1000
 n = 1000
 
-# Takes only a few seconds.
-res = mclapply(1:B, FUN = function(x) sim_ATT(n, useSL = FALSE), mc.cores = 4)
+# Takes only a few seconds without using SL.
+# With SL (useSL = T) will take 10 minutes or more.
+res = mclapply(1:B, FUN = function(x) sim_ATT(n, useSL = F), mc.cores = 4)
 
 if (F) {
   # Run non-parallel version manually if extra output is useful.
@@ -240,6 +242,7 @@ res = t(sapply(res, FUN = function(x) x))
 
 # Review coverage. We want this to be close to 95%.
 # Currently getting 94.5% so we're looking pretty good!
+# But 93.6 - 93.3% with SuperLearner :/
 mean(res[, 3])
 
 # Check bias in our estimates. We want this to be close to 0.
