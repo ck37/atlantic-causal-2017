@@ -120,18 +120,18 @@ sim_ATT = function(n,
       cat("Found", num_nas, "missing values in Q0W after SL.\n")
     }
   }
-  
+
   # Predict Q1W with all units set to A = treated.
   data1 = X
   data1$A = 1
-  
+
   if (!useSL) {
     Q1W = suppressWarnings(predict(QAWfit, newdata = data1, type = 'response'))
   } else {
     cat("QAWfit from SL:\n")
     print(QAWfit)
     Q1W = predict(QAWfit, newdata = data1, onlySL = T)$pred
-    
+
     num_nas = sum(is.na(Q1W))
     if (num_nas > 0) {
       cat("Found", num_nas, "missing values in Q1W after SL.\n")
@@ -239,7 +239,7 @@ if (F) {
 res = t(sapply(res, FUN = function(x) x))
 
 # Review coverage. We want this to be close to 95%.
-# Currently getting 86% so we're undercovering.
+# Currently getting 94.5% so we're looking pretty good!
 mean(res[, 3])
 
 # Check bias in our estimates. We want this to be close to 0.
