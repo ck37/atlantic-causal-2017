@@ -171,7 +171,7 @@ sim_ATT = function(n,
   Q1Wstar = update_results$Q1Wstar
   QAWstar = with(initdata, ifelse(A == 1, Q1Wstar, Q0Wstar))
 
-  Psi = with(initdata, sum((A == 1) * (Q1Wstar - Q0Wstar)) / sum(A))
+  Psi = with(initdata, sum((A == 1) * (Ystar - Q0Wstar)) / sum(A))
 
   Dstar = with(data, ((A == 1) - (A == 0) * g / (1 - g)) / mean(A) * (Ystar - QAWstar))
 

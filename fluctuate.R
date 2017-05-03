@@ -7,15 +7,15 @@ truncate <- function(x, lower = 0.01, upper = 1 - lower) {
 # Takes initdata, dataframe or list containing elements: Q0W, Q1W, Y, g, A
 update <- function(initdata) {
 
-  # Create clever covariate, which is 0 for treated units.
-  H0W = with(initdata, (- g / (1 - g)) / mean(A))
-  H1W = with(initdata, 1 / mean(A))
-  HAW = with(initdata, ifelse(A == 1, H1W, H0W))
+  # Create ``clever covariate'', which is 0 for treated units. This will only be used to update Q01.
+  H0W = with(initdata, - g / (1 - g))
+  HAW = with(initdata, ifelse(A == 1, 0, H0W))
   
   QAW = with(initdata, ifelse(A == 1, Q1W, Q0W))
 
-  # Fit a glm with H as clever covariate.
-  fit = glm(Y ~ offset(qlogis(QAW)) + HAW - 1,
+  # Fit a glm with the ``clever covariate'' moved to the weight.
+  fit = glm(Y ~ offset(qlogis(QAW)) + 1,
+            weight = -HAW,
             data = initdata,
             family = "binomial")
 
@@ -30,9 +30,12 @@ update <- function(initdata) {
     warning("Epsilon hat is NA.")
   }
 
-  # Update estimated Q(0, W) and Q(A, W)
-  Q0Wstar = with(initdata, plogis(qlogis(Q0W) + epsilon_hat * H0W))
-  Q1Wstar = with(initdata, plogis(qlogis(Q1W) + epsilon_hat * H1W))
+  # Update estimated Q(0, W)
+  Q0Wstar = with(initdata, plogis(qlogis(Q0W) + epsilon_hat))
+  
+  # Update for Q(1, W) merely ensures mean(Q1W*A) = mean(Y*A), i.e., same mean as Y among treated.
+  # This means we can replace with Ystar in estimator, though update may improve variance estimator
+  Q1Wstar = with(initdata, Q1W + mean((Y - Q1W) * A))
 
   num_nas0 = sum(is.na(Q0Wstar))
   num_nas1 = sum(is.na(Q1Wstar))
