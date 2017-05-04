@@ -15,7 +15,7 @@ newX = rbind(X,X1,X0)
 
 
 SL.glmnet_em = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
-                        nlambda = 100, useMin = TRUE, ...)
+                        nlambda = 100, useMin = TRUE, alpha, ...)
 {
   require("glmnet")
 
@@ -80,7 +80,7 @@ environment(SL.glmnet_em1) <- asNamespace("SuperLearner")
 
 # screens out vars with pvals below .25 inc ems and sq terms
 SL.glmnet_em25 = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
-                         nlambda = 100, useMin = TRUE, ...)
+                         nlambda = 100, useMin = TRUE, alpha, ...)
 {
   require("glmnet")
   
@@ -105,7 +105,7 @@ SL.glmnet_em25 = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
   colnames(newX)=colnames(X)
   
   # cut out those with 0 var, keep min number of vars with p-val below .25, keep A
-  alpha = .25
+  cutoff = .25
   min = 6
   pvalues = vapply(1:ncol(X),FUN = function(x){
     V = X[,x]
@@ -115,7 +115,7 @@ SL.glmnet_em25 = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
       if (class(p) == "try-error") p=1}
     return(p)},FUN.VALUE = 1)
   
-  keep <- pvalues <= alpha
+  keep <- pvalues <= cutoff
   if(sum(keep) < min){
     keep[order(pvalues)[1:min]] <- TRUE}
   
