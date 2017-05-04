@@ -7,7 +7,6 @@ estimate_att = function(A,
                         SL.library,
                         g.SL.library,
                         gbounds = c(0.01, 0.99),
-                        depsilon =  0.001,
                         V = 10,
                         # Set to F to disable parallelism.
                         parallel = T,
@@ -15,7 +14,9 @@ estimate_att = function(A,
                         alpha = c(.0005, .9995),
                         verbose = F,
                         #Added optional prescreening: (0,0) if you don't want it
-                        prescreen=c(0.25, 9)
+                        prescreen=c(0.25, 9),
+                        # Added option of whether to use SL
+                        useSL = T
                         ) {
 
   time_start = proc.time()
@@ -35,7 +36,7 @@ estimate_att = function(A,
   }
 
   # Convert factors to dummies
-  W <- model.matrix(~ ., data = W)
+  W <- model.matrix(~ ., data = data.frame(W))
 
   # Remove intercept that model.matrix() added.
   W = W[, -1]
@@ -44,9 +45,10 @@ estimate_att = function(A,
   nonbinary <- which(colMeans(W) > 1)
 
   Wcat <- matrix(as.integer(W[,nonbinary] < rep(colMeans(W[,nonbinary]), each = n)), nrow = n, byrow = FALSE)
-  colnames(Wcat) <- paste0(colnames(W[,nonbinary]), "cat")
-
-  W <- cbind(W, x_3aug = as.integer(W[,"x_3"] > 0), x_4aug = as.integer(W[,"x_4"] > 0), Wcat)
+  if(ncol(Wcat) > 0){
+    colnames(Wcat) <- paste0( colnames(W[,nonbinary]), "cat")
+    W <- cbind(W, x_3aug = as.integer(W[,"x_3"] > 0), x_4aug = as.integer(W[,"x_4"] > 0), Wcat)
+  }
 
   #  Identify range of outcome variable.
   a <- min(Y)
@@ -54,6 +56,32 @@ estimate_att = function(A,
 
   # Rescale Y to [0, 1]
   Ystar <- (Y - a) / (b - a)
+  
+  if (!useSL) {
+    # Estimate outcome regression
+    QAWfit <- suppressWarnings(glm(Y ~ W + A, family = 'gaussian'))
+  
+    # Estimate propensity score.
+    gfit <- glm(A ~ W, family = 'binomial')
+  
+    # Predict smoothed potential outcome (Q0_bar) under A = control.
+    new0        <- data.frame(W,0)
+    names(new0) <- c(colnames(W),"A")
+    Q0W         <- suppressWarnings(predict(QAWfit, newdata = new0, type = 'response'))
+
+    # Predict Q1W with all units set to A = treated.
+    new1   <- new0
+    new1$A <- 1
+    Q1W    <- suppressWarnings(predict(QAWfit, newdata = new1, type = 'response'))
+    
+    # Predict propensity score.
+    g1W <- predict(gfit, type = 'response')
+    g1W <- .bound(g1W, gbounds)
+    
+    Q.unbd <- cbind(QAW = ifelse(A == 1, Q1W, Q0W),
+                    Q0W = Q0W,
+                    Q1W = Q1W)
+  } else{
 
   # Prescreening
 
@@ -171,6 +199,8 @@ estimate_att = function(A,
   Q.unbd <- cbind(QAW = A * m.SL.A1$SL.predict + (1 - A) * m.SL.A0$SL.predict,
                   Q0W = m.SL.A0$SL.predict,
                   Q1W = m.SL.A1$SL.predict)
+  }
+  
   colnames(Q.unbd) <- c("QAW", "Q0W", "Q1W")
 
   # Bound Q on the original scale.
@@ -180,26 +210,18 @@ estimate_att = function(A,
   Q <- .bound((Q_orig_scale - a) / (b - a), alpha)
 
   if (verbose) {
-    cat("\nestimate_att: fluctuating via one_step_att().\n")
+    cat("\nestimate_att: fluctuating via update().\n")
   }
 
-  # Fluctuation via the one-step algorithm.
-  # TODO: convert this to an interated TMLE fluctuation.
-  results.oneStep <- one_step_att(Y = Ystar,
-                                  A = A,
-                                  Q = Q,
-                                  g1W = g1W,
-                                  depsilon = depsilon,
-                                  max_iter = max(1000, 2 / depsilon),
-                                  verbose = verbose,
-                                  gbounds = gbounds,
-                                  Qbounds = alpha)
+  # Fluctuation via weighted logistic regression.
+  initdata = data.frame(A = A, Y = Ystar, Q = Q, g = g1W)
+  results.wtupdate <- suppressWarnings(update(initdata))
 
   # Convert estimate back to original scale.
-  est <- results.oneStep[1] * (b - a)
+  est <- results.wtupdate[1] * (b - a)
 
   # Convert se back to original scale.
-  se <- sqrt(results.oneStep[2]) * (b - a)
+  se <- sqrt(results.wtupdate[2]) * (b - a)
 
   ##############
   # Unit-level estimate uses observed outcome and the complementary modeled outcome.
@@ -207,20 +229,18 @@ estimate_att = function(A,
   # NOTE: if we fit a pooled outcome regression for both treatment & control,
   # we should update this to not use separate models for A1 and A0.
 
-  # Best Y1 is observed Y if A = 1 and SL.predict otherwise.
-  best_y1 = A * Y + (1 - A) * m.SL.A1$SL.predict
-
-  # Best Y0 is observed Y if A = 0 and SL.predict otherwise.
-  best_y0 = (1 - A) * Y + A * m.SL.A0$SL.predict
-
   # Difference is our unit-level estimated treatment effect.
   # These are already unscaled so we don't need to multiply by (b - a)
-  unit_est = best_y1 - best_y0
+  if(!useSL){
+    unit_est = Q1W - Q0W
+  } else{
+    unit_est = m.SL.A1$SL.predict - m.SL.A0$SL.predict
+  }
+  # CM note: It looks like the unit-level effects they want are Q1W - Q0W at each observed W,
+  #          not Y(1) - Y(0), so best to use our SL predictions for both for each observed W
 
-  # Compile unit-level effects, preferable with a ci_lower and ci_upper.
-  unit_estimates = data.frame(est = unit_est,
-                              ci_lower = NA,
-                              ci_upper = NA)
+  # Compile unit-level effects. They don't want a CI. These aren't pathwise diff'ble param's anyway.
+  unit_estimates = data.frame(est = unit_est)
 
   time_end = proc.time()
 
@@ -228,9 +248,9 @@ estimate_att = function(A,
                  se = se,
                  b = b,
                  a = a,
-                 ci_lower = est - 1.96 * se,
+                 ci_lower = est - qnorm(.975) * se,
                  unit_estimates = unit_estimates,
-                 ci_upper = est + 1.96 * se,
+                 ci_upper = est + qnorm(.975) * se,
                  time = time_end - time_start)
 
   return(results)
