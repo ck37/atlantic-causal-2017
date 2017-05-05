@@ -297,11 +297,25 @@ estimate_att =
   # Difference in our unit-level estimated potential outcomes, or \hat{tau_i}.
   # These are already unscaled so we don't need to multiply by (b - a)
   unit_est = Q1W - Q0W
+  
+  # Sandwich variance estimate for linear model with all effect modifiers
+  Sigma  = gee(Y ~ A * W, id = 1:n)$robust.variance
+  
+  # Generate matrix of differences in model matrices for treated and controls
+  dat0     = dat1 = data.frame(A,W)
+  dat0$A   = 0
+  dat1$A   = 1
+  new0     = model.matrix(~ A * W, data = dat0)
+  new1     = model.matrix(~ A * W, data = dat1)
+  new_diff = new1 - new0
+  
+  # Create vector of variances for unit-level effect estimates
+  unit_var = apply(new_diff, 1, function(x){t(x) %*% Sigma %*% x})
 
   # Compile unit-level effects, preferable with a ci_lower and ci_upper.
   unit_estimates = data.frame(est = unit_est,
-                                 ci_lower = NA,
-                                 ci_upper = NA)
+                                 ci_lower = unit_est - qnorm(.975) * sqrt(unit_var),
+                                 ci_upper = unit_est + qnorm(.975) * sqrt(unit_var))
 
   time_end = proc.time()
 
