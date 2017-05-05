@@ -1,17 +1,4 @@
-# For a quick test use the code below which uses a model matrix as susan did
-X = read.csv("inbound/pre_data/X_subset_y.csv",header=FALSE)
-W = read.csv("inbound/pre_data/X_subset_z.csv",header=FALSE)
-A = read.csv("inbound/pre_data/4.100.z.csv")[,1]
-Y = read.csv("inbound/pre_data/4.101.y.csv")[,1]
-Y = (Y-min(Y))/(max(Y)-min(Y))
-X$A = A
-X = as.data.frame(model.matrix(~ ., data = X))
-X = X[,-1]
-X1 = X
-X1$A = 1
-X0 = X
-X0$A = 0
-newX = rbind(X,X1,X0)
+
 
 
 SL.glmnet_em = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
@@ -338,8 +325,23 @@ SL.library = list("SL.bayesglm_em05","SL.bayesglm_em20","SL.glm_em05","SL.glm_em
                   "SL.glmnet_em250.4","SL.glmnet_em250.6","SL.glmnet_em250.8","SL.glmnet_em251")
 
 
+# For a quick test use the code below which uses a model matrix as susan did
 if (F) {
   # Run manually if desired.
+  X = read.csv("inbound/pre_data/X_subset_y.csv",header=FALSE)
+  W = read.csv("inbound/pre_data/X_subset_z.csv",header=FALSE)
+  A = read.csv("inbound/pre_data/4.100.z.csv")[,1]
+  Y = read.csv("inbound/pre_data/4.101.y.csv")[,1]
+  Y = (Y-min(Y))/(max(Y)-min(Y))
+  X$A = A
+  X = as.data.frame(model.matrix(~ ., data = X))
+  X = X[,-1]
+  X1 = X
+  X1$A = 1
+  X0 = X
+  X0$A = 0
+  newX = rbind(X,X1,X0)
+
   testSL = SuperLearner(Y,X,newX=newX,family=binomial(),SL.library=SL.library)
   testSL$library.predict[1:10,]
 }
