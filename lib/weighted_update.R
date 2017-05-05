@@ -1,6 +1,8 @@
 # Takes initdata, dataframe or list containing elements: A, Y, Q, g
 update <- function(initdata) {
   
+  n = length(initdata$A)
+  
   # Create ``clever covariate'', which is 0 for treated units. This will only be used to update Q01.
   H0W = with(initdata, - g / (1 - g))
   HAW = with(initdata, ifelse(A == 1, 0, H0W))

@@ -1,9 +1,12 @@
-source("fluctuate1.R")
-source("lib/bound.R")
-library(ggplot2)
-library(parallel)
-library(SuperLearner)
-library(glmnet)
+source("lib/function_library.R")
+
+# Set auto-install to T for code to install any missing packages.
+load_all_packages(auto_install = F, verbose = T)
+
+# Load all .R files in the lib directory.
+ck37r::load_all_code("lib", verbose = T)
+
+source("simulations/fluctuate.R")
 
 # generate conditional means
 
@@ -20,17 +23,17 @@ Q0=function(A,W1,W2,W3,W4) return(A-2*W3+3*W1+1*W2+.25*W4)
 gendata = function(n) {
 
   U1 = runif(n,0,1)
-  W1= -1*(U1<=.5)+(U1>.5)
-  W2=rnorm(n)
-  W3=rnorm(n)
-  W4=rnorm(n)
-  A=rbinom(n,1,g0(W1,W2,W3,W4))
-  Y=rnorm(n,Q0(A,W1,W2,W3,W4),2)
+  W1 = -1*(U1<=.5) + (U1>.5)
+  W2 = rnorm(n)
+  W3 = rnorm(n)
+  W4 = rnorm(n)
+  A = rbinom(n,1,g0(W1,W2,W3,W4))
+  Y = rnorm(n,Q0(A,W1,W2,W3,W4),2)
   mean(Q0(A,W1,W2,W3,W4))
   mean(Y)
-  Q0Wtrue = Q0(A=rep(0,n),W1,W2,W3,W4)
-  Q1Wtrue = Q0(A=rep(1,n),W1,W2,W3,W4)
-  data.frame(A,W1,W2,W3,W4,Y,Q0Wtrue,Q1Wtrue)
+  Q0Wtrue = Q0(A = rep(0, n),W1,W2,W3,W4)
+  Q1Wtrue = Q0(A = rep(1, n),W1,W2,W3,W4)
+  data.frame(A, W1, W2, W3, W4, Y, Q0Wtrue, Q1Wtrue)
 }
 
 # function just to give estimates for now
@@ -44,6 +47,7 @@ sim_ATT = function(n,
                    # SL library for outcome regression (Qbar).
                    SL.library = c("SL.mean", "SL.glmnet",
                                   "SL.glm"#,
+                                  #"SL.bartMachine"#,
                                  # "SL.ranger"#,
                                   #"SL.xgboost",
                                   #"SL.speedglm"
@@ -120,18 +124,18 @@ sim_ATT = function(n,
       cat("Found", num_nas, "missing values in Q0W after SL.\n")
     }
   }
-  
+
   # Predict Q1W with all units set to A = treated.
   data1 = X
   data1$A = 1
-  
+
   if (!useSL) {
     Q1W = suppressWarnings(predict(QAWfit, newdata = data1, type = 'response'))
   } else {
     cat("QAWfit from SL:\n")
     print(QAWfit)
     Q1W = predict(QAWfit, newdata = data1, onlySL = T)$pred
-    
+
     num_nas = sum(is.na(Q1W))
     if (num_nas > 0) {
       cat("Found", num_nas, "missing values in Q1W after SL.\n")
@@ -171,7 +175,7 @@ sim_ATT = function(n,
   Q1Wstar = update_results$Q1Wstar
   QAWstar = with(initdata, ifelse(A == 1, Q1Wstar, Q0Wstar))
 
-  Psi = with(initdata, sum((A == 1) * (Q1Wstar - Q0Wstar)) / sum(A))
+  Psi = with(initdata, sum((A == 1) * (Ystar - Q0Wstar)) / sum(A))
 
   Dstar = with(data, ((A == 1) - (A == 0) * g / (1 - g)) / mean(A) * (Ystar - QAWstar))
 
@@ -209,14 +213,15 @@ sim_ATT = function(n,
 }
 
 # Set multicore-compatible seed.
-# set.seed(1, "L'Ecuyer-CMRG")
+set.seed(1, "L'Ecuyer-CMRG")
 
 # Run B sims of n=1000 observations, then compile results.
 B = 1000
 n = 1000
 
-# Takes only a few seconds.
-res = mclapply(1:B, FUN = function(x) sim_ATT(n, useSL = FALSE), mc.cores = 4)
+# Takes only a few seconds without using SL.
+# With SL (useSL = T) will take 10 minutes or more.
+res = mclapply(1:B, FUN = function(x) sim_ATT(n, useSL = F), mc.cores = 4)
 
 if (F) {
   # Run non-parallel version manually if extra output is useful.
@@ -239,7 +244,8 @@ if (F) {
 res = t(sapply(res, FUN = function(x) x))
 
 # Review coverage. We want this to be close to 95%.
-# Currently getting 86% so we're undercovering.
+# Currently getting 94.5% so we're looking pretty good!
+# But 93.6 - 93.3% with SuperLearner :/
 mean(res[, 3])
 
 # Check bias in our estimates. We want this to be close to 0.

@@ -1,23 +1,35 @@
 #' TODO: document function.
-estimate_att = function(A,
-                        Y,
-                        W,
-                        # Only gaussian is supported currently.
-                        family = "gaussian",
-                        SL.library,
-                        g.SL.library,
-                        gbounds = c(0.01, 0.99),
-                        V = 10,
-                        # Set to F to disable parallelism.
-                        parallel = T,
-                        # Bounds used for Y when rescaled to [0, 1].
-                        alpha = c(.0005, .9995),
-                        verbose = F,
-                        #Added optional prescreening: (0,0) if you don't want it
-                        prescreen=c(0.25, 9),
-                        # Added option of whether to use SL
-                        useSL = T
-                        ) {
+estimate_att =
+  function(# Binary treatment indicator.
+           A,
+           # Outcome
+           Y,
+           # Adjustment covariates.
+           W,
+           # Only gaussian (continuous outcomes) is supported currently.
+           family = "gaussian",
+           # SL library for outcome regression.
+           SL.library,
+           # SL library for propensity score estimation.
+           g.SL.library,
+           # Bounding of estimated propensity score.
+           gbounds = c(0.01, 0.99),
+           # Cross-validation folds used by SuperLearner.
+           V = 10,
+           # If T estimate a single outcome regression. If F
+           # estimate treatment and control outcomes separately.
+           pooled_outcome = F,
+           # Set to F to disable parallelism.
+           parallel = T,
+           # Bounds used for Y when rescaled to [0, 1].
+           alpha = c(.0005, .9995),
+           verbose = F,
+           # Added optional prescreening: (0,0) if you don't want it
+           # First term is p-value cut-off, second is minimum # of terms.
+           prescreen = c(0.25, 9),
+           # If T use SL estimation, otherwise use GLM.
+           useSL = T
+           ) {
 
   time_start = proc.time()
 
@@ -25,6 +37,7 @@ estimate_att = function(A,
 
   if (parallel) {
     if (verbose) cat("estimate_att: Using mcSuperLearner\n")
+    # This assumes we're on OSX or Linux; won't work in Windows.
     sl_fn = mcSuperLearner
   } else {
     if (verbose) cat("estimate_att: Using SuperLearner\n")
@@ -41,12 +54,19 @@ estimate_att = function(A,
   # Remove intercept that model.matrix() added.
   W = W[, -1]
 
-  # SG: This isn't general, but true for these data.
+  # Identify non-binary variables.
+  # SG: This isn't general, but true for 2016 data.
+  # CK: does this work with factor variables, etc.?
+  # Seems better to check length(unique) for each variable.
   nonbinary <- which(colMeans(W) > 1)
 
-  Wcat <- matrix(as.integer(W[,nonbinary] < rep(colMeans(W[,nonbinary]), each = n)), nrow = n, byrow = FALSE)
-  if(ncol(Wcat) > 0){
+  # Create indicators for whether variable is less than its mean or not.
+  less_than_mean_indicators = as.integer(W[, nonbinary] < rep(colMeans(W[, nonbinary]), each = n))
+  Wcat <- matrix(less_than_mean_indicators, nrow = n, byrow = FALSE)
+
+  if (ncol(Wcat) > 0) {
     colnames(Wcat) <- paste0( colnames(W[,nonbinary]), "cat")
+    # CK: we probably want to remove these extra indicator variables.
     W <- cbind(W, x_3aug = as.integer(W[,"x_3"] > 0), x_4aug = as.integer(W[,"x_4"] > 0), Wcat)
   }
 
@@ -56,14 +76,14 @@ estimate_att = function(A,
 
   # Rescale Y to [0, 1]
   Ystar <- (Y - a) / (b - a)
-  
+
   if (!useSL) {
     # Estimate outcome regression
     QAWfit <- suppressWarnings(glm(Y ~ W + A, family = 'gaussian'))
-  
+
     # Estimate propensity score.
     gfit <- glm(A ~ W, family = 'binomial')
-  
+
     # Predict smoothed potential outcome (Q0_bar) under A = control.
     new0        <- data.frame(W,0)
     names(new0) <- c(colnames(W),"A")
@@ -73,15 +93,15 @@ estimate_att = function(A,
     new1   <- new0
     new1$A <- 1
     Q1W    <- suppressWarnings(predict(QAWfit, newdata = new1, type = 'response'))
-    
+
     # Predict propensity score.
     g1W <- predict(gfit, type = 'response')
     g1W <- .bound(g1W, gbounds)
-    
+
     Q.unbd <- cbind(QAW = ifelse(A == 1, Q1W, Q0W),
                     Q0W = Q0W,
                     Q1W = Q1W)
-  } else{
+  } else {
 
   # Prescreening
 
@@ -109,10 +129,10 @@ estimate_att = function(A,
 
   } else {
     if (verbose) cat("Keep all covariates. \n")
-    
+
     Wsq <- W^2
     colnames(Wsq) <- paste0(colnames(Wsq), "sq")
-    
+
     # Add squared terms to X.
     X<-cbind(W, Wsq)
     n.columns <- ncol(X)
@@ -127,7 +147,8 @@ estimate_att = function(A,
                     SL.library = g.SL.library,
                     verbose = verbose,
                     family = "binomial",
-                    cvControl = list(V = V)))
+                    # Stratify the CV folds to maximize power.
+                    cvControl = list(V = V, stratifyCV = T)))
 
   if (class(g.SL) == "try-error") {
     # TODO: fall back to a simpler SL algorithm before using glm().
@@ -148,59 +169,108 @@ estimate_att = function(A,
   # Create indicator for the control group.
   A0 <- A == 0
 
-  if (verbose) {
-    cat("\nestimate_att: Estimating control regression.\n")
-  }
+  if (!pooled_outcome) {
+    # Stratified outcome regression version.
 
-  # TODO: convert these two to a pooled regression.
+    if (verbose) {
+      cat("\nestimate_att: Estimating control regression.\n")
+    }
 
-  # Outcome regression for control units.
-  # Note that we are modeling Y (original scale) rather than Ystar (scaled).
-  # TODO: check for errors and fall back to simpler library like we do for g.
-  m.SL.A0 <- try(sl_fn(Y = Y[A0],
-                       X = as.data.frame(X[A0, ]),
-                       # Predicted potential outcome for all observations.
-                       newX = as.data.frame(X),
-                       SL.library = SL.library,
-                       family = family,
-                       verbose = verbose,
-                       cvControl = list(V = V)))
+    # Outcome regression for control units.
+    # Note that we are modeling Y (original scale) rather than Ystar (scaled).
+    # TODO: check for errors and fall back to simpler library like we do for g.
+    m.SL.A0 <- try(sl_fn(Y = Y[A0],
+                         X = as.data.frame(X[A0, ]),
+                         # Predicted potential outcome for all observations.
+                         newX = as.data.frame(X),
+                         SL.library = SL.library,
+                         family = family,
+                         verbose = verbose,
+                         cvControl = list(V = V)))
 
-  if (class(m.SL.A0) != "try-error") {
-    cat("Outcome regression for controls:\n")
-    print(m.SL.A0)
+    if (class(m.SL.A0) != "try-error") {
+      cat("Outcome regression for controls:\n")
+      print(m.SL.A0)
+    } else {
+      cat("Outcome regression for controls failed!")
+    }
+
+    if (verbose) {
+      cat("\nestimate_att: Estimating treated regression.\n")
+    }
+
+    # Outcome regression for treated units.
+    # Note that we are modeling Y (original scale) rather than Ystar (scaled)
+    # TODO: check for errors and fall back to simpler library like we do for g.
+    m.SL.A1 <- sl_fn(Y = Y[!A0],
+                     X = as.data.frame(X[!A0,]),
+                     # Predicted potential outcome for all observations.
+                     newX = as.data.frame(X),
+                     SL.library = SL.library,
+                     family = family,
+                     verbose = verbose,
+                     cvControl = list(V = V))
+
+    if (class(m.SL.A1) != "try-error") {
+      cat("Outcome regression for treatment:\n")
+      print(m.SL.A1)
+    } else {
+      cat("Outcome regression for treatment failed!")
+    }
+    
+    Q0W = m.SL.A0$SL.predict
+    Q1W = m.SL.A1$SL.predict
+    QAW = ifelse(A == 1, Q1W, Q0W)
+
+    Q.unbd = cbind(QAW = QAW, Q1W = Q1W, Q0W = Q0W)
+    
   } else {
-    cat("Outcome regression for controls failed!")
-  }
+    # Pooled outcome regression version.
+    if (verbose) {
+      cat("\nestimate_att: Estimating outcome regression.\n")
+    }
 
-  if (verbose) {
-    cat("\nestimate_att: Estimating treated regression.\n")
-  }
+    # Create dataframe used for prediction.
+    # We want to get Q0W and Q1W.
+    # We can then create QAW based on those and speed up
+    # prediction just a tad.
+    pred_X = rbind(#data.frame(A = A, X),
+                   data.frame(A = 0, X),
+                   data.frame(A = 1, X))
+    
+    # Confirm that we have n * 2 rows, otherwise fail out.
+    stopifnot(nrow(pred_X) == n * 2)
 
-  # Outcome regression for treated units.
-  # Note that we are modeling Y (original scale) rather than Ystar (scaled)
-  # TODO: check for errors and fall back to simpler library like we do for g.
-  m.SL.A1 <- sl_fn(Y = Y[!A0],
-                   X = as.data.frame(X[!A0,]),
-                   # Predicted potential outcome for all observations.
-                   newX = as.data.frame(X),
-                   SL.library = SL.library,
-                   family = family,
-                   verbose = verbose,
-                   cvControl = list(V = V))
+    # Outcome regression for all units.
+    # Note that we are modeling Y (original scale) rather than Ystar (scaled).
+    # TODO: check for errors and fall back to simpler library like we do for g.
+    sl_outcome = try(sl_fn(Y = Y,
+                           X = data.frame(A = A, X),
+                           # Predicted potential outcome for all observations.
+                           newX = pred_X,
+                           SL.library = SL.library,
+                           family = family,
+                           verbose = verbose,
+                           cvControl = list(V = V)))
 
-  if (class(m.SL.A1) != "try-error") {
-    cat("Outcome regression for treatment:\n")
-    print(m.SL.A1)
-  } else {
-    cat("Outcome regression for treatment failed!")
-  }
+    if (class(sl_outcome) != "try-error") {
+      cat("Outcome regression:\n")
+      print(sl_outcome)
+    } else {
+      cat("Outcome regression failed!")
+    }
+    
+    # Order of predictions is Q0W then Q1W.
+    Q0W = sl_outcome$SL.predict[1:n]
+    Q1W = sl_outcome$SL.predict[n + 1:n]
+    QAW = ifelse(A == 1, Q1W, Q0W)
 
-  Q.unbd <- cbind(QAW = A * m.SL.A1$SL.predict + (1 - A) * m.SL.A0$SL.predict,
-                  Q0W = m.SL.A0$SL.predict,
-                  Q1W = m.SL.A1$SL.predict)
-  }
-  
+    Q.unbd <- cbind(QAW = QAW, Q0W = Q0W, Q1W = Q1W)
+
+  } # Done with pooled regression version.
+  } # Done with glm vs SL option.
+
+
   colnames(Q.unbd) <- c("QAW", "Q0W", "Q1W")
 
   # Bound Q on the original scale.
@@ -224,19 +294,10 @@ estimate_att = function(A,
   se <- sqrt(results.wtupdate[2]) * (b - a)
 
   ##############
-  # Unit-level estimate uses observed outcome and the complementary modeled outcome.
-
-  # NOTE: if we fit a pooled outcome regression for both treatment & control,
-  # we should update this to not use separate models for A1 and A0.
-
-  # Difference is our unit-level estimated treatment effect.
+  # Difference in our unit-level estimated potential outcomes, or \hat{tau_i}.
   # These are already unscaled so we don't need to multiply by (b - a)
-  if(!useSL){
-    unit_est = Q1W - Q0W
-  } else{
-    unit_est = m.SL.A1$SL.predict - m.SL.A0$SL.predict
-  }
-  
+  unit_est = Q1W - Q0W
+
   # Compile unit-level effects, preferable with a ci_lower and ci_upper.
   unit_estimates = data.frame(est = unit_est,
                                  ci_lower = NA,
