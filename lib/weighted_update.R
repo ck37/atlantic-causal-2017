@@ -52,7 +52,7 @@ update <- function(initdata) {
   }
   
   Dstar = with(initdata, ((A == 1) - (A == 0) * g / (1 - g)) / mean(A) * (Y - QAWstar))
-  var.psi = (n-1)*var(Dstar)/n^2
+
   num_nas = sum(is.na(Dstar))
   if (num_nas > 0) {
     cat("Dstar num NAs is:", num_nas, "\n")
@@ -60,7 +60,7 @@ update <- function(initdata) {
   
   # Compile results.
   results = c(psi     = with(initdata, sum((A == 1) * (Y - Q0Wstar)) / sum(A)),
-              var.psi = var.psi)
+              var.psi = (n-1)*var(Dstar)/n^2)
   
   return(results)
 }
