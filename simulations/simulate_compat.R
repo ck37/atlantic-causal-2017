@@ -1,11 +1,10 @@
-source("weighted_update.R")
-source("sl_wrappers.R")
-source("lib/bound.R")
-source("estimate_att.R")
-library(ggplot2)
-library(parallel)
-library(SuperLearner)
-library(glmnet)
+source("lib/function_library.R")
+
+# Set auto-install to T for code to install any missing packages.
+load_all_packages(auto_install = F, verbose = T)
+
+# Load all .R files in the lib directory.
+ck37r::load_all_code("lib", verbose = T)
 
 # generate conditional means
 
@@ -20,7 +19,7 @@ Q0=function(A,W1,W2,W3,W4) return(A-2*W3+3*W1+1*W2+.25*W4)
 
 # random draw of sample size n--continuous unscaled Y
 gendata = function(n) {
-  
+
   U1 = runif(n,0,1)
   W1 = -1*(U1<=.5) + (U1>.5)
   W2 = rnorm(n)
@@ -51,38 +50,38 @@ sim_ATT = function(n,
                                   #"SL.xgboost",
                                   #"SL.speedglm"
                    )) {
-  
+
   # Draw sample from data-generating process.
   data = gendata(n)
-  
+
   # Pull true potential outcomes out of the dataframe.
   Q0Wtrue = data$Q0Wtrue
   Q1Wtrue = data$Q1Wtrue
-  
+
   # Now remove these true values from the dataframe so they aren't used
   # in the glm() when we do ~ .
   data$Q0Wtrue = data$Q1Wtrue = NULL
-  
+
   # Target parameter: sample average treatment effect on treated units (SATT).
   Psi_0 = sum((data$A == 1) * (Q1Wtrue - Q0Wtrue)) / sum(data$A == 1)
-  
-  sim_results = estimate_att(A = data$A, 
-                             Y = data$Y, 
+
+  sim_results = estimate_att(A = data$A,
+                             Y = data$Y,
                              W = as.data.frame(cbind(data$W1,data$W2,data$W3,data$W4)),
                              SL.library = SL.library,
                              g.SL.library = SL.library,
                              useSL = useSL)
-  
+
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
-  
+
   # Compile results into a named vector.
   sim_output = c(Psi_0 = Psi_0,
               Psi = sim_results$est,
               covered = covered,
               conf_interval = c(sim_results$ci_lower,sim_results$ci_upper),
               standard_error = sim_results$se)
-  
+
   return(sim_output)
 }
 
@@ -105,12 +104,12 @@ if (F) {
 if (F) {
   # Run this if desired for debugging.
   debugonce(sim_ATT)
-  
+
   # Run version with SL fit for Q.
   # This takes a very long time to run 1000 times, like 30 minutes to 1+ hrs
   # depending on the SL library.
   res = mclapply(1:B, FUN = function(x) sim_ATT(n, useSL = T), mc.cores = 4)
-  
+
   # Single-run version for testing:
   res = lapply(1:50, FUN = function(x) sim_ATT(n, useSL = T))
 }

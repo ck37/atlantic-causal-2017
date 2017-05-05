@@ -1,9 +1,12 @@
-source("fluctuate.R")
-source("lib/bound.R")
-library(ggplot2)
-library(parallel)
-library(SuperLearner)
-library(glmnet)
+source("lib/function_library.R")
+
+# Set auto-install to T for code to install any missing packages.
+load_all_packages(auto_install = F, verbose = T)
+
+# Load all .R files in the lib directory.
+ck37r::load_all_code("lib", verbose = T)
+
+source("simulations/fluctuate.R")
 
 # generate conditional means
 

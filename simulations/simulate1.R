@@ -1,9 +1,12 @@
-source("fluctuate1.R")
-source("lib/bound.R")
-library(ggplot2)
-library(parallel)
-library(SuperLearner)
-library(glmnet)
+source("lib/function_library.R")
+
+# Set auto-install to T for code to install any missing packages.
+load_all_packages(auto_install = F, verbose = T)
+
+# Load all .R files in the lib directory.
+ck37r::load_all_code("lib", verbose = T)
+
+source("simulations/fluctuate1.R")
 
 # generate conditional means
 
@@ -120,18 +123,18 @@ sim_ATT = function(n,
       cat("Found", num_nas, "missing values in Q0W after SL.\n")
     }
   }
-  
+
   # Predict Q1W with all units set to A = treated.
   data1 = X
   data1$A = 1
-  
+
   if (!useSL) {
     Q1W = suppressWarnings(predict(QAWfit, newdata = data1, type = 'response'))
   } else {
     cat("QAWfit from SL:\n")
     print(QAWfit)
     Q1W = predict(QAWfit, newdata = data1, onlySL = T)$pred
-    
+
     num_nas = sum(is.na(Q1W))
     if (num_nas > 0) {
       cat("Found", num_nas, "missing values in Q1W after SL.\n")

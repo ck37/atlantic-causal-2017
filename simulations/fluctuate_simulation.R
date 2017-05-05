@@ -1,6 +1,12 @@
-source("fluctuate.R")
-library(ggplot2)
-library(parallel)
+source("lib/function_library.R")
+
+# Set auto-install to T for code to install any missing packages.
+load_all_packages(auto_install = F, verbose = T)
+
+# Load all .R files in the lib directory.
+ck37r::load_all_code("lib", verbose = T)
+
+source("simulations/fluctuate.R")
 
 # generate conditional means
 Q0=function(A,W1,W2,W3,W4) return(A+2*A*W4+3*W1+1*W2^2+.5*W3*W4+.25*W4)
