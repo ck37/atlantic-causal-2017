@@ -62,7 +62,7 @@ estimate_att =
 
   # Create indicators for whether variable is less than its mean or not.
   less_than_mean_indicators = as.integer(W[, nonbinary] < rep(colMeans(W[, nonbinary]), each = n))
-  Wcat <- matrix(less_that_mean_indicators, nrow = n, byrow = FALSE)
+  Wcat <- matrix(less_than_mean_indicators, nrow = n, byrow = FALSE)
 
   if (ncol(Wcat) > 0) {
     colnames(Wcat) <- paste0( colnames(W[,nonbinary]), "cat")
