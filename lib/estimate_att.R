@@ -34,6 +34,7 @@ estimate_att =
 
   if (parallel) {
     if (verbose) cat("estimate_att: Using mcSuperLearner\n")
+    # This assumes we're on OSX or Linux; won't work in Windows.
     sl_fn = mcSuperLearner
   } else {
     if (verbose) cat("estimate_att: Using SuperLearner\n")
@@ -50,12 +51,19 @@ estimate_att =
   # Remove intercept that model.matrix() added.
   W = W[, -1]
 
-  # SG: This isn't general, but true for these data.
+  # Identify non-binary variables.
+  # SG: This isn't general, but true for 2016 data.
+  # CK: does this work with factor variables, etc.?
+  # Seems better to check length(unique) for each variable.
   nonbinary <- which(colMeans(W) > 1)
 
-  Wcat <- matrix(as.integer(W[,nonbinary] < rep(colMeans(W[,nonbinary]), each = n)), nrow = n, byrow = FALSE)
-  if(ncol(Wcat) > 0){
+  # Create indicators for whether variable is less than its mean or not.
+  less_than_mean_indicators = as.integer(W[, nonbinary] < rep(colMeans(W[, nonbinary]), each = n))
+  Wcat <- matrix(less_that_mean_indicators, nrow = n, byrow = FALSE)
+
+  if (ncol(Wcat) > 0) {
     colnames(Wcat) <- paste0( colnames(W[,nonbinary]), "cat")
+    # CK: we probably want to remove these extra indicator variables.
     W <- cbind(W, x_3aug = as.integer(W[,"x_3"] > 0), x_4aug = as.integer(W[,"x_4"] > 0), Wcat)
   }
 
