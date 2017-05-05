@@ -54,21 +54,7 @@ estimate_att =
   # Remove intercept that model.matrix() added.
   W = W[, -1]
 
-  # Identify non-binary variables.
-  # SG: This isn't general, but true for 2016 data.
-  # CK: does this work with factor variables, etc.?
-  # Seems better to check length(unique) for each variable.
-  nonbinary <- which(colMeans(W) > 1)
 
-  # Create indicators for whether variable is less than its mean or not.
-  less_than_mean_indicators = as.integer(W[, nonbinary] < rep(colMeans(W[, nonbinary]), each = n))
-  Wcat <- matrix(less_than_mean_indicators, nrow = n, byrow = FALSE)
-
-  if (ncol(Wcat) > 0) {
-    colnames(Wcat) <- paste0( colnames(W[,nonbinary]), "cat")
-    # CK: we probably want to remove these extra indicator variables.
-    W <- cbind(W, x_3aug = as.integer(W[,"x_3"] > 0), x_4aug = as.integer(W[,"x_4"] > 0), Wcat)
-  }
 
   #  Identify range of outcome variable.
   a <- min(Y)
@@ -108,6 +94,12 @@ estimate_att =
   #Make prescreening optional
   if (sum(prescreen)>0) {
     if (verbose) cat("Keep covariates with univariate associations. \n")
+
+    # Identify non-binary variables.
+    # SG: This isn't general, but true for 2016 data.
+    # CK: does this work with factor variables, etc.?
+    # Seems better to check length(unique) for each variable.
+    nonbinary <- which(colMeans(W) > 1)
 
     keep <- which(prescreen.uni(Y, A, W, alpha = prescreen[1], min=prescreen[2]))
     keep.nonbinary <- nonbinary[nonbinary %in% keep]
@@ -217,13 +209,13 @@ estimate_att =
     } else {
       cat("Outcome regression for treatment failed!")
     }
-    
+
     Q0W = m.SL.A0$SL.predict
     Q1W = m.SL.A1$SL.predict
     QAW = ifelse(A == 1, Q1W, Q0W)
 
     Q.unbd = cbind(QAW = QAW, Q1W = Q1W, Q0W = Q0W)
-    
+
   } else {
     # Pooled outcome regression version.
     if (verbose) {
@@ -237,7 +229,7 @@ estimate_att =
     pred_X = rbind(#data.frame(A = A, X),
                    data.frame(A = 0, X),
                    data.frame(A = 1, X))
-    
+
     # Confirm that we have n * 2 rows, otherwise fail out.
     stopifnot(nrow(pred_X) == n * 2)
 
@@ -259,7 +251,7 @@ estimate_att =
     } else {
       cat("Outcome regression failed!")
     }
-    
+
     # Order of predictions is Q0W then Q1W.
     Q0W = sl_outcome$SL.predict[1:n]
     Q1W = sl_outcome$SL.predict[n + 1:n]
