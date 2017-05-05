@@ -147,7 +147,8 @@ estimate_att =
                     SL.library = g.SL.library,
                     verbose = verbose,
                     family = "binomial",
-                    cvControl = list(V = V)))
+                    # Stratify the CV folds to maximize power.
+                    cvControl = list(V = V, stratifyCV = T)))
 
   if (class(g.SL) == "try-error") {
     # TODO: fall back to a simpler SL algorithm before using glm().
