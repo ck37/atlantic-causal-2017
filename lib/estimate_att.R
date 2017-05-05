@@ -236,11 +236,11 @@ estimate_att = function(A,
   } else{
     unit_est = m.SL.A1$SL.predict - m.SL.A0$SL.predict
   }
-  # CM note: It looks like the unit-level effects they want are Q1W - Q0W at each observed W,
-  #          not Y(1) - Y(0), so best to use our SL predictions for both for each observed W
-
-  # Compile unit-level effects. They don't want a CI. These aren't pathwise diff'ble param's anyway.
-  unit_estimates = data.frame(est = unit_est)
+  
+  # Compile unit-level effects, preferable with a ci_lower and ci_upper.
+  unit_estimates = data.frame(est = unit_est,
+                                 ci_lower = NA,
+                                 ci_upper = NA)
 
   time_end = proc.time()
 
