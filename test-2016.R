@@ -61,13 +61,25 @@ g_lib = c("SL.mean", "SL.glmnet")
 
 set.seed(1, "L'Ecuyer-CMRG")
 
-# Takes a minute or so to run.
-results = estimate_att(A = data$z,
-                       Y = data$y,
-                       W = data_x,
+# Restrict to 250 observations to be similar to contest.
+obs = sample(nrow(data), 250, replace = F)
+A = data$z[obs]
+Y = data$y[obs]
+W = data_x[obs, ]
+
+# Takes a minute or so to run using a simple library.
+results = estimate_att(A = A,
+                       Y = Y,
+                       W = W,
                        SL.library = q_lib,
                        g.SL.library = g_lib,
+                       pooled_outcome = T,
+                       parallel = T,
                        verbose = conf$verbose)
+
+# Parallel (4 cores): 31 seconds with stratified or pooled outcome regression.
+# Non-parallel: 76 seconds with stratified, 78 seconds with pooled outcome regression. 
+results$time
 
 # Extract out unit estimates to make displaying more convenient.
 unit_estimates = results$unit_estimates
