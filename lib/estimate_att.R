@@ -290,24 +290,40 @@ estimate_att =
   # These are already unscaled so we don't need to multiply by (b - a)
   unit_est = Q1W - Q0W
   
+  
+  # TODO: remove linearly correlated columns from W before running this.
+  
   # Sandwich variance estimate for linear model with all effect modifiers
-  Sigma  = gee(Y ~ A * W, id = 1:n)$robust.variance
+  gee = try(gee(Y ~ A + W, id = 1:n, subset = T, na.action = na.omit),
+            silent = verbose)
   
-  # Generate matrix of differences in model matrices for treated and controls
-  dat0     = dat1 = data.frame(A,W)
-  dat0$A   = 0
-  dat1$A   = 1
-  new0     = model.matrix(~ A * W, data = dat0)
-  new1     = model.matrix(~ A * W, data = dat1)
-  new_diff = new1 - new0
+  if (class(gee) != "try-error") {
+    Sigma = gee$robust.variance
   
-  # Create vector of variances for unit-level effect estimates
-  unit_var = apply(new_diff, 1, function(x){t(x) %*% Sigma %*% x})
+    # Generate matrix of differences in model matrices for treated and controls
+    dat0     = dat1 = data.frame(A,W)
+    dat0$A   = 0
+    dat1$A   = 1
+    new0     = model.matrix(~ A * W, data = dat0)
+    new1     = model.matrix(~ A * W, data = dat1)
+    new_diff = new1 - new0
+  
+    # Create vector of variances for unit-level effect estimates
+    unit_var = apply(new_diff, 1, function(x){t(x) %*% Sigma %*% x})
+    
+    ci_lower = unit_est - qnorm(.975) * sqrt(unit_var)
+    ci_upper = unit_est + qnorm(.975) * sqrt(unit_var)
+  } else {
+    if (verbose) cat("GEE failed for unit-level effect inference.\n")
+    # Fall back to NAs for the unit-level CI.
+    ci_lower = NA
+    ci_upper = NA
+  }
 
   # Compile unit-level effects, preferable with a ci_lower and ci_upper.
   unit_estimates = data.frame(est = unit_est,
-                                 ci_lower = unit_est - qnorm(.975) * sqrt(unit_var),
-                                 ci_upper = unit_est + qnorm(.975) * sqrt(unit_var))
+                              ci_lower = ci_lower,
+                              ci_upper = ci_upper)
 
   time_end = proc.time()
 
