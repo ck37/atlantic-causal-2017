@@ -1,23 +1,32 @@
 #' TODO: document function.
-estimate_att = function(A,
-                        Y,
-                        W,
-                        # Only gaussian is supported currently.
-                        family = "gaussian",
-                        SL.library,
-                        g.SL.library,
-                        gbounds = c(0.01, 0.99),
-                        V = 10,
-                        # Set to F to disable parallelism.
-                        parallel = T,
-                        # Bounds used for Y when rescaled to [0, 1].
-                        alpha = c(.0005, .9995),
-                        verbose = F,
-                        #Added optional prescreening: (0,0) if you don't want it
-                        prescreen=c(0.25, 9),
-                        # Added option of whether to use SL
-                        useSL = T
-                        ) {
+estimate_att =
+  function(# Binary treatment indicator.
+           A,
+           # Outcome
+           Y,
+           # Adjustment covariates.
+           W,
+           # Only gaussian (continuous outcomes) is supported currently.
+           family = "gaussian",
+           # SL library for outcome regression.
+           SL.library,
+           # SL library for propensity score estimation.
+           g.SL.library,
+           # Bounding of estimated propensity score.
+           gbounds = c(0.01, 0.99),
+           # Cross-validation folds used by SuperLearner.
+           V = 10,
+           # Set to F to disable parallelism.
+           parallel = T,
+           # Bounds used for Y when rescaled to [0, 1].
+           alpha = c(.0005, .9995),
+           verbose = F,
+           # Added optional prescreening: (0,0) if you don't want it
+           # First term is p-value cut-off, second is minimum # of terms.
+           prescreen = c(0.25, 9),
+           # If T use SL estimation, otherwise use GLM.
+           useSL = T
+           ) {
 
   time_start = proc.time()
 
@@ -56,14 +65,14 @@ estimate_att = function(A,
 
   # Rescale Y to [0, 1]
   Ystar <- (Y - a) / (b - a)
-  
+
   if (!useSL) {
     # Estimate outcome regression
     QAWfit <- suppressWarnings(glm(Y ~ W + A, family = 'gaussian'))
-  
+
     # Estimate propensity score.
     gfit <- glm(A ~ W, family = 'binomial')
-  
+
     # Predict smoothed potential outcome (Q0_bar) under A = control.
     new0        <- data.frame(W,0)
     names(new0) <- c(colnames(W),"A")
@@ -73,11 +82,11 @@ estimate_att = function(A,
     new1   <- new0
     new1$A <- 1
     Q1W    <- suppressWarnings(predict(QAWfit, newdata = new1, type = 'response'))
-    
+
     # Predict propensity score.
     g1W <- predict(gfit, type = 'response')
     g1W <- .bound(g1W, gbounds)
-    
+
     Q.unbd <- cbind(QAW = ifelse(A == 1, Q1W, Q0W),
                     Q0W = Q0W,
                     Q1W = Q1W)
@@ -109,10 +118,10 @@ estimate_att = function(A,
 
   } else {
     if (verbose) cat("Keep all covariates. \n")
-    
+
     Wsq <- W^2
     colnames(Wsq) <- paste0(colnames(Wsq), "sq")
-    
+
     # Add squared terms to X.
     X<-cbind(W, Wsq)
     n.columns <- ncol(X)
@@ -200,7 +209,7 @@ estimate_att = function(A,
                   Q0W = m.SL.A0$SL.predict,
                   Q1W = m.SL.A1$SL.predict)
   }
-  
+
   colnames(Q.unbd) <- c("QAW", "Q0W", "Q1W")
 
   # Bound Q on the original scale.
@@ -236,7 +245,7 @@ estimate_att = function(A,
   } else{
     unit_est = m.SL.A1$SL.predict - m.SL.A0$SL.predict
   }
-  
+
   # Compile unit-level effects, preferable with a ci_lower and ci_upper.
   unit_estimates = data.frame(est = unit_est,
                                  ci_lower = NA,
