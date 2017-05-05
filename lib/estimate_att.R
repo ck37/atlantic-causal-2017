@@ -290,11 +290,24 @@ estimate_att =
   # These are already unscaled so we don't need to multiply by (b - a)
   unit_est = Q1W - Q0W
   
+  # Remove linearly correlated columns from W before running gee.
+  # Use caret to identify collinearity.
+  linear_combos = caret::findLinearCombos(W)
   
-  # TODO: remove linearly correlated columns from W before running this.
+  remove_columns = linear_combos$remove
+  
+  if (length(linear_combos$remove) > 0) {
+    if (verbose) {
+      cat("Removing", length(linear_combos$remove), "W vars due to collinearity:\n")
+      cat(paste0(colnames(W)[linear_combos$remove], collapse = ", "), "\n")
+    }
+    
+    # Make sure we don't switch to a vector if only 1 column remains.
+    W = W[, -linear_combos$remove, drop = F]
+  }
   
   # Sandwich variance estimate for linear model with all effect modifiers
-  gee = try(gee(Y ~ A + W, id = 1:n, subset = T, na.action = na.omit),
+  gee = try(gee::gee(Y ~ A + W, id = 1:n, subset = T, na.action = na.omit),
             silent = verbose)
   
   if (class(gee) != "try-error") {
@@ -315,6 +328,7 @@ estimate_att =
     ci_upper = unit_est + qnorm(.975) * sqrt(unit_var)
   } else {
     if (verbose) cat("GEE failed for unit-level effect inference.\n")
+    print(gee)
     # Fall back to NAs for the unit-level CI.
     ci_lower = NA
     ci_upper = NA
