@@ -216,10 +216,13 @@ estimate_att =
     } else {
       cat("Outcome regression for treatment failed!")
     }
+    
+    Q0W = m.SL.A0$SL.predict
+    Q1W = m.SL.A1$SL.predict
+    QAW = ifelse(A == 1, Q1W, Q0W)
 
-    Q.unbd <- cbind(QAW = A * m.SL.A1$SL.predict + (1 - A) * m.SL.A0$SL.predict,
-                    Q0W = m.SL.A0$SL.predict,
-                    Q1W = m.SL.A1$SL.predict)
+    Q.unbd = cbind(QAW = QAW, Q1W = Q1W, Q0W = Q0W)
+    
   } else {
     # Pooled outcome regression version.
     if (verbose) {
@@ -227,13 +230,15 @@ estimate_att =
     }
 
     # Create dataframe used for prediction.
-    # We want to get QAW, Q0W, and Q1W.
-    pred_X = rbind(data.frame(A = A, X),
+    # We want to get Q0W and Q1W.
+    # We can then create QAW based on those and speed up
+    # prediction just a tad.
+    pred_X = rbind(#data.frame(A = A, X),
                    data.frame(A = 0, X),
                    data.frame(A = 1, X))
     
-    # Confirm that we have n * 3 rows, otherwise fail out.
-    stopifnot(nrow(pred_X) == n * 3)
+    # Confirm that we have n * 2 rows, otherwise fail out.
+    stopifnot(nrow(pred_X) == n * 2)
 
     # Outcome regression for all units.
     # Note that we are modeling Y (original scale) rather than Ystar (scaled).
@@ -253,11 +258,13 @@ estimate_att =
     } else {
       cat("Outcome regression failed!")
     }
+    
+    # Order of predictions is Q0W then Q1W.
+    Q0W = sl_outcome$SL.predict[1:n]
+    Q1W = sl_outcome$SL.predict[n + 1:n]
+    QAW = ifelse(A == 1, Q1W, Q0W)
 
-    # Order of predictions is: QAW, Q0W, Q1W.
-    Q.unbd <- cbind(QAW = sl_outcome$SL.predict[1:n],
-                    Q0W = sl_outcome$SL.predict[n + 1:n],
-                    Q1W = sl_outcome$SL.predict[2*n + 1:n])
+    Q.unbd <- cbind(QAW = QAW, Q0W = Q0W, Q1W = Q1W)
 
   } # Done with pooled regression version.
   } # Done with glm vs SL option.
@@ -286,18 +293,9 @@ estimate_att =
   se <- sqrt(results.wtupdate[2]) * (b - a)
 
   ##############
-  # Unit-level estimate uses observed outcome and the complementary modeled outcome.
-
-  # NOTE: if we fit a pooled outcome regression for both treatment & control,
-  # we should update this to not use separate models for A1 and A0.
-
-  # Difference is our unit-level estimated treatment effect.
+  # Difference in our unit-level estimated potential outcomes, or \hat{tau_i}.
   # These are already unscaled so we don't need to multiply by (b - a)
-  if(!useSL){
-    unit_est = Q1W - Q0W
-  } else{
-    unit_est = m.SL.A1$SL.predict - m.SL.A0$SL.predict
-  }
+  unit_est = Q1W - Q0W
 
   # Compile unit-level effects, preferable with a ci_lower and ci_upper.
   unit_estimates = data.frame(est = unit_est,
