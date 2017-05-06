@@ -12,11 +12,15 @@ conf = list(
   # Subdirectory to save output logs.
   output_dir = "output",
 
+  # Can be "simple" or "complex".
+  #sl_lib_type = "simple",
+  sl_lib_type = "complex",
+
   # Set to T for extra output during execution.
   verbose = T,
 
   # Set auto-install to T for code to install any missing packages.
-  auto_install = F,
+  auto_install = T,
 
   # Use up to this many cores if available.
   max_cores = 4
@@ -56,8 +60,24 @@ if (conf$verbose) {
   cat("Cores used:", getOption("mc.cores"), "\n")
 }
 
-q_lib = c("SL.mean", "SL.glmnet")
-g_lib = c("SL.mean", "SL.glmnet")
+if (conf$sl_lib_type == "simple") {
+  q_lib = c("SL.mean", "SL.glmnet")
+  g_lib = c("SL.mean", "SL.glmnet")
+} else {
+  q_lib = list(c("SL.glm", "All",  "prescreen.nosq"),
+                 # Not working, can we fix it?
+                 #c("SL.gam", "All", "prescreen.nosq"),
+                 #c("sg.gbm.2500", "prescreen.nocat"),
+                 "SL.xgboost",
+                 "SL.randomForest",
+                 "SL.glmnet",
+                 "SL.nnet",
+                 c("SL.earth", "prescreen.nosq"),
+                 # Doesn't work currently, g estimation never finishes.
+                 #"SL.bartMachine",
+                 "SL.mean")
+  g_lib = q_lib
+}
 
 set.seed(1, "L'Ecuyer-CMRG")
 
@@ -77,8 +97,8 @@ results = estimate_att(A = A,
                        parallel = T,
                        verbose = conf$verbose)
 
-# Parallel (4 cores): 31 seconds with stratified or pooled outcome regression.
-# Non-parallel: 76 seconds with stratified, 78 seconds with pooled outcome regression. 
+# Parallel (4 cores): X seconds with stratified or pooled outcome regression.
+# Non-parallel: X seconds with stratified, X seconds with pooled outcome regression.
 results$time
 
 # Extract out unit estimates to make displaying more convenient.

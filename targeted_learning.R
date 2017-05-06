@@ -96,9 +96,10 @@ if (conf$debug) {
                      #c("sg.gbm.2500", "prescreen.nocat"),
                      "SL.xgboost",
                      "SL.randomForest",
-                     "SL.glmnet","SL.nnet",
+                     "SL.glmnet",
+                     "SL.nnet",
                      c("SL.earth", "prescreen.nosq"),
-                     c("SL.bartMachine", "prescreen.nocat"),
+                     "SL.bartMachine",
                      "SL.mean")
 }
 
