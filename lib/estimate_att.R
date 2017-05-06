@@ -53,6 +53,49 @@ estimate_att =
 
   # Remove intercept that model.matrix() added.
   W = W[, -1]
+  
+  # Remove constant columns from W.
+  constant_columns = which(apply(W, MARGIN = 2, var) == 0)
+  W = W[, -constant_columns]
+  if (verbose) {
+    cat("Removed", length(constant_columns), "constant columns from W.\n")
+  }
+  
+  # Remove linearly correlated columns from W before running gee.
+  # Use caret to identify collinearity.
+  linear_combos = caret::findLinearCombos(cbind(Y, A, W))
+  
+  remove_columns = linear_combos$remove
+  
+  if (length(linear_combos$remove) > 0) {
+    # Remove Y and A from columns if they are included.
+    # linear_combos$remove = setdiff(linear_combos$remove, c("Y", "A"))
+    
+    if (verbose) {
+      cat("Removing", length(linear_combos$remove), "W vars due to collinearity:\n")
+      cat(paste0(colnames(W)[linear_combos$remove - 2], collapse = ", "), "\n")
+      cat("Indices:", paste(linear_combos$remove, collapse = ", "), "\n") 
+    }
+    
+    # Make sure we don't switch to a vector if only 1 column remains.
+    W = W[, !colnames(W) %in% colnames(W)[linear_combos$remove - 2], drop = F]
+    
+    # Check if Y, A, W is full rank.
+    # Check for full-rank covariate matrix so that glm() can run without error.
+    data_mat = cbind(Y, A, W)
+    
+    # Compute covariance matrix.
+    cov_mat = cov(data_mat)
+    
+    # Compute QR decomp of covariance matrix.
+    qr_cov = qr(cov_mat)
+    
+    # These need to be equal for the covariance matrix to be full rank.
+    if (ncol(cov_mat) != qr_cov$rank && verbose) {
+      cat("Warning: covariance of (Y, A, W) matrix is not full rank.\n")
+      cat("Covariance columns:", ncol(cov_mat), "QR rank:", qr_cov$rank, "\n")
+    }
+  }
 
   # TODO: remove collinear columns from W?
 
@@ -290,47 +333,12 @@ estimate_att =
   # These are already unscaled so we don't need to multiply by (b - a)
   unit_est = Q1W - Q0W
   
-  # Remove constant columns from W.
-  constant_columns = which(apply(W, MARGIN = 2, var) == 0)
-  W = W[, -constant_columns]
-  if (verbose) {
-    cat("Removed", length(constant_columns), "constant columns from W.\n")
-  }
   
-  # Remove linearly correlated columns from W before running gee.
-  # Use caret to identify collinearity.
-  linear_combos = caret::findLinearCombos(cbind(Y, A, W))
-  
-  remove_columns = linear_combos$remove
-  
-  if (length(linear_combos$remove) > 0) {
-    # Remove Y and A from columns if they are included.
-    # linear_combos$remove = setdiff(linear_combos$remove, c("Y", "A"))
-    
-    if (verbose) {
-      cat("Removing", length(linear_combos$remove), "W vars due to collinearity:\n")
-      cat(paste0(colnames(W)[linear_combos$remove - 2], collapse = ", "), "\n")
-      cat("Indices:", paste(linear_combos$remove, collapse = ", "), "\n") 
-    }
-    
-    # Make sure we don't switch to a vector if only 1 column remains.
-    W = W[, !colnames(W) %in% colnames(W)[linear_combos$remove - 2], drop = F]
-    
-    # Check if Y, A, W is full rank.
-    # Check for full-rank covariate matrix so that glm() can run without error.
-    data_mat = cbind(Y, A, W)
-    
-    # Compute covariance matrix.
-    cov_mat = cov(data_mat)
-    
-    # Compute QR decomp of covariance matrix.
-    qr_cov = qr(cov_mat)
-    
-    # These need to be equal for the covariance matrix to be full rank.
-    if (ncol(cov_mat) != qr_cov$rank && verbose) {
-      cat("Warning: covariance of data matrix for GEE is not full rank.\n")
-      cat("Covariance columns:", ncol(cov_mat), "QR rank:", qr_cov$rank, "\n")
-    }
+  # Remove near-zero variance columns.
+  # Not working :/ "The following pre-processing methods were eliminated: 'nzv'"
+  if (F) {
+    preproc = caret::preProcess(data.frame(W), method = "nzv")
+    W = predict(preproc, W)
   }
   
   # Sandwich variance estimate for linear model with all effect modifiers
