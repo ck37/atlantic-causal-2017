@@ -10,45 +10,50 @@ library(glmnet)
 # bring in covariate data from last year
 X_f = read.csv("inbound/pre_data/X_subset_y.csv",header=FALSE)
 
-# randomly select 5 variables
-Wz_names = sample(colnames(X_f),5)
-Wy_names = sample(colnames(X_f),5)
-
 # to be used with various functional forms
 g0=function(v,coeff) plogis(v %*% coeff)
 Q0=function(v,coeff) v %*% coeff
 
-# create the functional forms for the mean outcomes
-form_z = paste0("~",paste(Wz_names,collapse = "+"))
-form_z = formula(form_z)
-form_y = paste0("~",paste(c("A",Wy_names),collapse = "+"))
-form_y = formula(form_y)
+# function to create functional forms to simulate, using data from last year
+# currently works for formg="linear" and formQ="linear"
+create_siminfo = function(numvarsg,numvarsQ, formg, formQ){
+  formg=formQ="linear"
+  numvarsg=10
+  numvarsQ=5
+  # select the covariates at random
+  Wz_names = sample(colnames(X_f),numvarsg)
+  Wy_names = sample(colnames(X_f),numvarsQ)
+  
+  # create the linear form if linear main terms if linear is specified
+  if (formg=="linear"){
+  form_z = paste0("~",paste(Wz_names,collapse = "+"))
+  form_z = formula(form_z)
+  }
+  
+  if (formQ=="linear"){
+    form_y = paste0("~",paste(c("A",Wy_names),collapse = "+"))
+    form_y = formula(form_y)
+  }
 
-# create treatment design
-Xz = model.matrix(form_z,X_f[,Wz_names])
-
-# generate A, making sure to have enough A=1 rep
-A=1
-while (mean(A)>=.66|mean(A)<=.33){
-  coeff_z = runif(length(colnames(Xz)),-1,1)/apply(Xz,2,FUN = function(x) {
+  # create treatment design
+  Xz = model.matrix(form_z,X_f[,Wz_names])
+  
+  # generate A, making sure to have enough A=1 rep
+  A=1
+  while (mean(A)>=.66|mean(A)<=.33){
+    coeff_z = runif(length(colnames(Xz)),-5/numvarsg,5/numvarsg)/apply(Xz,2,FUN = function(x) {
+      ifelse(var(x)==0,1,sd(x))})
+    A = rbinom(250,1,g0(Xz,coeff_z))
+  }
+  
+  # generate y design and true mean outcomes as well as Y
+  Xy = cbind(A,X_f[,Wy_names])
+  Xy = model.matrix(form_y,Xy)
+  
+  coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
     ifelse(var(x)==0,1,sd(x))})
-  A = rbinom(250,1,g0(Xz,coeff_z))
+  return(list(Xz=Xz,Xy=Xy,coeff_z=coeff_z,coeff_y=coeff_y))
 }
-mean(A)
-
-# generate y design and true mean outcomes as well as Y
-Xy = cbind(A,X_f[,Wy_names])
-Xy = model.matrix(form_y,Xy)
-Xy1 = Xy0 = Xy
-Xy1[,"A"] = 1
-Xy0[,"A"] = 0
-
-coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
-  ifelse(var(x)==0,1,sd(x))})
-QAW = Q0(Xy,coeff_y)
-Q1W = Q0(Xy1,coeff_y)
-Q0W = Q0(Xy0,coeff_y)
-Y = rnorm(250,QAW,sd(QAW))
 
 # Y
 # data.frame(QAW,Y)
@@ -70,21 +75,25 @@ sim_ATT = function(useSL = F,
                                   #"SL.speedglm"
                    )) {
   
-  # generate A, making sure to have enough A=1 rep
+  
+  # pull the sim info generated before--this should not change within this sim function
+  Xz = siminfo$Xz
+  Xy = siminfo$Xy
+  coeff_z = siminfo$coeff_z
+  coeff_y = siminfo$coeff_y
 
+  # generate A, making sure to have enough A=1 rep
+  A=99
   while (mean(A)>=.66|mean(A)<=.33){
     A = rbinom(250,1,g0(Xz,coeff_z))
   }
-  
+  A
+  mean(A)
   # generate y design and true mean outcomes as well as Y
-  Xy = cbind(A,Xy_f[,Wy_names])
-  Xy = model.matrix(form_y,Xy)
   Xy1 = Xy0 = Xy
   Xy1[,"A"] = 1
   Xy0[,"A"] = 0
   
-  coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
-    ifelse(var(x)==0,1,sd(x))})
   QAWtrue = Q0(Xy,coeff_y)
   Q1Wtrue = Q0(Xy1,coeff_y)
   Q0Wtrue = Q0(Xy0,coeff_y)
@@ -114,6 +123,7 @@ sim_ATT = function(useSL = F,
   return(sim_output)
 }
 
+sim_ATT()
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
