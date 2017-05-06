@@ -37,3 +37,15 @@ basics = data.frame(t(sapply(AYlist, FUN = function(x) {
 colnames(basics) = c("Abar","Ybar","Ysd","Ygiven1","Ygiven0","ATE","minY","maxY")
 
 basics
+
+Xy = read.csv("inbound/pre_data/X_subset_y.csv")
+Xz = read.csv("inbound/pre_data/X_subset_z.csv")
+head(Xy)
+ncol(Xy)
+summary(Xy)
+
+head(Xz)
+ncol(Xz)
+summary(Xz)
+
+
