@@ -25,13 +25,15 @@ AYlist = lapply(1:32,FUN=function(x) {
 basics = data.frame(t(sapply(AYlist, FUN = function(x) {
   Abar = mean(x$z)
   Ybar = mean(x$y)
-  Ysd = sd(x$y)/sqrt(length(x$y))
+  Ysd = sd(x$y)
   Ygiven1 = sum(with(x,z*y))/sum(x$z)
   Ygiven0 = sum(with(x,(1-z)*y))/sum(1-x$z)
+  a = min(x$y)
+  b = max(x$y)
   ATE = Ygiven1-Ygiven0
-  return(c(Abar,Ybar,Ysd,Ygiven1,Ygiven0,ATE))
+  return(c(Abar,Ybar,Ysd,Ygiven1,Ygiven0,ATE,a,b))
 })))
 
-colnames(basics) = c("Abar","Ybar","Ysd","Ygiven1","Ygiven0","ATE")
+colnames(basics) = c("Abar","Ybar","Ysd","Ygiven1","Ygiven0","ATE","minY","maxY")
 
 basics
