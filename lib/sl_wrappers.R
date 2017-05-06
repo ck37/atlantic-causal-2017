@@ -50,6 +50,10 @@ prescreen.nocat <- function(Y, X, ...){
 
 prescreen.nosq <- function(Y, X, ...){
   whichVariable <- rep(TRUE, NCOL(X))
+  whichVariable <- apply(X, 2, FUN = function(x) {
+    if (var(x)==0|sum(x==0)>=(length(x)-1)|sum(x==1)>=(length(x)-1)) return(FALSE) else return(TRUE)
+  })
+  keep = (listp==1)
   omit <- grep("sq", colnames(X))
   if(length(omit) > 0){
     whichVariable[omit] <- FALSE
@@ -62,12 +66,14 @@ prescreen.nosq <- function(Y, X, ...){
 prescreen.uni <- function(Y, A, X, alpha = .05, min = 5, ...){
   pvalues <- rep(NA, ncol(X))
   for (i in 1:ncol(X)){
-    m <- lm(Y~ A+ X[,i])
-    p <- try(summary(m)$coef[3,4], silent = TRUE)
-    if (class(p) == "try-error") {
-      pvalues[i] <- 1
-    } else {
-      pvalues[i] <- p
+    if (var(x)==0|sum(x==0)>=(length(x)-1)|sum(x==1)>=(length(x)-1)) pvalues[i]=1 else {
+      m <- lm(Y~ A+ X[,i])
+      p <- try(summary(m)$coef[3,4], silent = TRUE)
+      if (class(p) == "try-error") {
+        pvalues[i] <- 1
+      } else {
+        pvalues[i] <- p
+      }
     }
   }
   keep <- pvalues <= alpha
