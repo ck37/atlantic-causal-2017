@@ -65,17 +65,17 @@ if (conf$sl_lib_type == "simple") {
   g_lib = c("SL.mean", "SL.glmnet")
 } else {
   q_lib = list(c("SL.glm", "All",  "prescreen.nosq"),
-                  # Not working, can we fix it?
-                  # c("SL.gam", "All", "prescreen.nosq"),
-                  #c("sg.gbm.2500", "prescreen.nocat"),
-                  "SL.xgboost",
-                  "SL.randomForest",
-                  "SL.glmnet",
-                  "SL.nnet",
-                  c("SL.earth", "prescreen.nosq"),
-                  # Doesn't work currently, g estimation never finishes.
-                  #"SL.bartMachine",
-                  "SL.mean")
+                 # Not working, can we fix it?
+                 #c("SL.gam", "All", "prescreen.nosq"),
+                 #c("sg.gbm.2500", "prescreen.nocat"),
+                 "SL.xgboost",
+                 "SL.randomForest",
+                 "SL.glmnet",
+                 "SL.nnet",
+                 c("SL.earth", "prescreen.nosq"),
+                 # Doesn't work currently, g estimation never finishes.
+                 #"SL.bartMachine",
+                 "SL.mean")
   g_lib = q_lib
 }
 
