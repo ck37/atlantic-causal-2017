@@ -55,13 +55,15 @@ create_siminfo = function(numvarsg,numvarsQ, formg, formQ){
   return(list(Xz=Xz,Xy=Xy,coeff_z=coeff_z,coeff_y=coeff_y))
 }
 
+siminfo = create_siminfo(5,5,"linear","linear") 
+
 # Y
 # data.frame(QAW,Y)
 # max(QAW)-min(QAW)
 # mean(Q1W-Q0W)
 
 # function just to give estimates for now
-sim_ATT = function(useSL = F,
+sim_ATT = function(siminfo, useSL = F,
                    # Bounds used for Qbar when rescaled to [0, 1].
                    alpha = c(.0005, .9995),
                    # Bounds used for g to bound away from 0, 1.
@@ -87,8 +89,7 @@ sim_ATT = function(useSL = F,
   while (mean(A)>=.66|mean(A)<=.33){
     A = rbinom(250,1,g0(Xz,coeff_z))
   }
-  A
-  mean(A)
+
   # generate y design and true mean outcomes as well as Y
   Xy1 = Xy0 = Xy
   Xy1[,"A"] = 1
@@ -97,7 +98,7 @@ sim_ATT = function(useSL = F,
   QAWtrue = Q0(Xy,coeff_y)
   Q1Wtrue = Q0(Xy1,coeff_y)
   Q0Wtrue = Q0(Xy0,coeff_y)
-  Y = rnorm(250,QAW,sd(QAW)/3)
+  Y = rnorm(250,QAWtrue,sd(QAWtrue)/3)
   
   
   # Target parameter: sample average treatment effect on treated units (SATT).
@@ -123,7 +124,7 @@ sim_ATT = function(useSL = F,
   return(sim_output)
 }
 
-sim_ATT()
+sim_ATT(siminfo)
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
