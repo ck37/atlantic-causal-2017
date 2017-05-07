@@ -56,7 +56,8 @@ estimate_att =
   num_cols = ncol(W) 
   # Remove constant columns from W.
   nonconstant_columns = which(apply(W, MARGIN = 2, var) != 0)
-  W = W[, nonconstant_columns]
+  # Make sure we retain matrix format.
+  W = W[, nonconstant_columns, drop = F]
   if (verbose) {
     cat("Removed", num_cols-length(nonconstant_columns), "constant columns from W.\n")
   }
@@ -398,10 +399,15 @@ estimate_att =
   
   # Sandwich variance estimate for linear model with all effect modifiers
   # (Currently effect modification disabled until we work out rank issue.)
-  gee = try(gee::gee(Y ~ A + W, id = 1:n, subset = T, na.action = na.omit),
+  # Capture the unnecessary output created by gee().
+  # TODO: replace gee package with a more recent one; this one is old and crappy.
+  capture.output({
+    gee = try(gee::gee(Y ~ A + W, id = 1:n, subset = T, na.action = na.omit),
             silent = verbose)
+  })
   
-  if (class(gee) != "try-error") {
+  # If successfull class will be c("gee", "glm"). Otherwise will be "try-error".
+  if ("gee" %in% class(gee)) {
     Sigma = gee$robust.variance
   
     # Generate matrix of differences in model matrices for treated and controls
