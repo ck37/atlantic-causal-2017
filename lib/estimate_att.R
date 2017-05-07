@@ -139,14 +139,17 @@ estimate_att =
     if (verbose) cat("Keep covariates with univariate associations. \n")
 
     # Identify non-binary variables.
-    # SG: This isn't general, but true for 2016 data.
-    # CK: does this work with factor variables, etc.?
-    # Seems better to check length(unique) for each variable.
-    nonbinary <- which(colMeans(W) > 1)
-
+    nonbinary <- apply(W,2,function(x) { length(unique(x))>2 })
+    
+    #Keep for all variables
     keep <- which(prescreen.uni(Y, A, W, alpha = prescreen[1], min=prescreen[2]))
-    keep.nonbinary <- nonbinary[nonbinary %in% keep]
-
+    
+    keep.nonbinary<-data.frame(t(subset(t(nonbinary),select=keep)))
+    names(keep.nonbinary)<-"val"
+    
+    keep.nonbin_sub<-subset(keep.nonbinary, val=="TRUE")
+    keep.nonbinary<-names(data.frame(W)) %in% row.names(keep.nonbin_sub)
+    
     # Initialize to NULL so that cbind() will still work.
     Wsq = NULL
 
