@@ -39,7 +39,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=10, formg="linear", formQ="linear"
   A=1
   while (mean(A)>=.66|mean(A)<=.33){
     coeff_z = runif(length(colnames(Xz)),-5/numvarsg,5/numvarsg)/apply(Xz,2,FUN = function(x) {
-      ifelse(var(x)==0,1,sd(x))})
+      ifelse(var(x)==0,1,max(abs(x)))})
     A = rbinom(250,1,g0(Xz,coeff_z))
   }
   
@@ -48,7 +48,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=10, formg="linear", formQ="linear"
   Xy = model.matrix(form_y,Xy)
   
   coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
-    ifelse(var(x)==0,1,sd(x))})
+    ifelse(var(x)==0,1,max(abs(x)))})
   return(list(Xz=Xz,Xy=Xy,coeff_z=coeff_z,coeff_y=coeff_y))
 }
 
@@ -58,7 +58,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=10, formg="linear", formQ="linear"
 # mean(Q1W-Q0W)
 
 # function just to give estimates for now
-sim_ATT = function(siminfo, useSL = F,
+sim_ATT_jl = function(siminfo, useSL = F,
                    # Bounds used for Qbar when rescaled to [0, 1].
                    alpha = c(.0005, .9995),
                    # Bounds used for g to bound away from 0, 1.
@@ -96,7 +96,7 @@ sim_ATT = function(siminfo, useSL = F,
   Q0Wtrue = Q0(Xy0,coeff_y)
   # add noise to the true mean
   Y = rnorm(250,QAWtrue,sd(QAWtrue)/3)
-  
+  Qtrue = data.frame(Q1 = Q1Wtrue, Q0 = Q0Wtrue)
   
   # Target parameter: sample average treatment effect on treated units (SATT).
   Psi_0 = sum((A == 1) * (Q1Wtrue - Q0Wtrue)) / sum(A == 1)
@@ -111,13 +111,13 @@ sim_ATT = function(siminfo, useSL = F,
   
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
-  
+  Qest = sim_results$Q_orig_scale
   # Compile results into a named vector.
   sim_output = c(Psi_0 = Psi_0,
               Psi = sim_results$est,
               covered = covered,
               conf_interval = c(sim_results$ci_lower,sim_results$ci_upper),
-              standard_error = sim_results$se)
+              standard_error = sim_results$se,Qtrue=Qtrue, Qest=Qest)
   
   return(sim_output)
 }
@@ -125,8 +125,9 @@ sim_ATT = function(siminfo, useSL = F,
 # NOTE: We do not want to create siminfo within the sim
 siminfo = create_siminfo() 
 siminfo
-sim_ATT(siminfo,useSL=T,SL.library="SL.glm")
-
+peter = sim_ATT_jl(siminfo,useSL=T,SL.library="SL.glm")
+head(peter$Qtrue)
+undebug(estimate_att)
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
