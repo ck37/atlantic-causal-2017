@@ -2,6 +2,7 @@ source("lib/weighted_update.R")
 source("lib/sl_wrappers.R")
 source("lib/bound.R")
 source("lib/estimate_att.R")
+source("lib/estimate_att_jl.R")
 library(ggplot2)
 library(parallel)
 library(SuperLearner)
@@ -107,17 +108,17 @@ sim_ATT_jl = function(siminfo, useSL = F,
                              SL.library = SL.library,
                              g.SL.library = SL.library,
                              useSL = useSL,
-                             verbose = verbose)
+                             verbose = verbose,Qtrue=Qtrue)
   
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
-  Qest = sim_results$Q_orig_scale
+  
   # Compile results into a named vector.
   sim_output = c(Psi_0 = Psi_0,
               Psi = sim_results$est,
               covered = covered,
               conf_interval = c(sim_results$ci_lower,sim_results$ci_upper),
-              standard_error = sim_results$se,Qtrue=Qtrue, Qest=Qest)
+              standard_error = sim_results$se)
   
   return(sim_output)
 }
