@@ -16,10 +16,10 @@ Q0=function(v,coeff) v %*% coeff
 
 # function to create functional forms to simulate, using data from last year
 # currently works for formg="linear" and formQ="linear"
-create_siminfo = function(numvarsg,numvarsQ, formg, formQ){
-  formg=formQ="linear"
-  numvarsg=10
-  numvarsQ=5
+create_siminfo = function(numvarsg=5,numvarsQ=10, formg="linear", formQ="linear"){
+  # formg=formQ="linear"
+  # numvarsg=10
+  # numvarsQ=5
   # select the covariates at random
   Wz_names = sample(colnames(X_f),numvarsg)
   Wy_names = sample(colnames(X_f),numvarsQ)
@@ -55,8 +55,6 @@ create_siminfo = function(numvarsg,numvarsQ, formg, formQ){
   return(list(Xz=Xz,Xy=Xy,coeff_z=coeff_z,coeff_y=coeff_y))
 }
 
-siminfo = create_siminfo(5,5,"linear","linear") 
-
 # Y
 # data.frame(QAW,Y)
 # max(QAW)-min(QAW)
@@ -90,7 +88,7 @@ sim_ATT = function(siminfo, useSL = F,
   while (mean(A)>=.66|mean(A)<=.33){
     A = rbinom(250,1,g0(Xz,coeff_z))
   }
-
+  
   # generate y design and true mean outcomes as well as Y
   Xy1 = Xy0 = Xy
   Xy1[,"A"] = 1
@@ -104,6 +102,7 @@ sim_ATT = function(siminfo, useSL = F,
   
   # Target parameter: sample average treatment effect on treated units (SATT).
   Psi_0 = sum((A == 1) * (Q1Wtrue - Q0Wtrue)) / sum(A == 1)
+  Psi_0
   
   sim_results = estimate_att(A = A, 
                              Y = Y, 
@@ -127,17 +126,19 @@ sim_ATT = function(siminfo, useSL = F,
 }
 
 # NOTE: We do not want to create siminfo within the sim
-sim_ATT(siminfo)
+siminfo = create_siminfo() 
+siminfo
+sim_ATT(siminfo,useSL=T,SL.library="SL.glmnet")
 
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
 # Run B sims of n=1000 observations, then compile results.
-B = 10
+B = 100
 
 # Takes only a few seconds without using SL.
 # With SL (useSL = T) will take 10 minutes or more.
-res = mclapply(1:B, FUN = function(x) sim_ATT(useSL = F), mc.cores = 2)
+res = mclapply(1:B, FUN = function(x) sim_ATT(siminfo,useSL=T), mc.cores = 4)
 
 if (F) {
   # Run non-parallel version manually if extra output is useful.
