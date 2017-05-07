@@ -353,8 +353,8 @@ estimate_att =
     dat0     = dat1 = data.frame(A,W)
     dat0$A   = 0
     dat1$A   = 1
-    new0     = model.matrix(~ A * W, data = dat0)
-    new1     = model.matrix(~ A * W, data = dat1)
+    new0     = model.matrix(~ A + W, data = dat0)
+    new1     = model.matrix(~ A + W, data = dat1)
     new_diff = new1 - new0
   
     # Create vector of variances for unit-level effect estimates
