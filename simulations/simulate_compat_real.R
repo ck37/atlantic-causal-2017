@@ -80,7 +80,7 @@ sim_ATT = function(siminfo, useSL = F,
   coeff_z = siminfo$coeff_z
   coeff_y = siminfo$coeff_y
 
-  # generate A, making sure to have enough A=1 rep
+  # generate A, making sure to have enough A=1 rep btwn 33 and 66 percent
   A=99
   while (mean(A)>=.66|mean(A)<=.33){
     A = rbinom(250,1,g0(Xz,coeff_z))
@@ -94,13 +94,13 @@ sim_ATT = function(siminfo, useSL = F,
   QAWtrue = Q0(Xy,coeff_y)
   Q1Wtrue = Q0(Xy1,coeff_y)
   Q0Wtrue = Q0(Xy0,coeff_y)
+  # add noise to the true mean
   Y = rnorm(250,QAWtrue,sd(QAWtrue)/3)
   
   
   # Target parameter: sample average treatment effect on treated units (SATT).
   Psi_0 = sum((A == 1) * (Q1Wtrue - Q0Wtrue)) / sum(A == 1)
-  Psi_0
-  
+
   sim_results = estimate_att(A = A, 
                              Y = Y, 
                              W = X_f,
