@@ -18,7 +18,7 @@ estimate_att =
            V = 10,
            # If T estimate a single outcome regression. If F
            # estimate treatment and control outcomes separately.
-           pooled_outcome = F,
+           pooled_outcome = T,
            # Set to F to disable parallelism.
            parallel = T,
            # Bounds used for Y when rescaled to [0, 1].
@@ -26,7 +26,7 @@ estimate_att =
            verbose = F,
            # Added optional prescreening: (0,0) if you don't want it
            # First term is p-value cut-off, second is minimum # of terms.
-           prescreen = c(0.25, 9),
+           prescreen = c(0.25, 3),
            # If T use SL estimation, otherwise use GLM.
            useSL = T
            ) {
@@ -50,15 +50,15 @@ estimate_att =
 
   # Convert factors to dummies
   W <- model.matrix(~ ., data = data.frame(W))
-
+ 
   # Remove intercept that model.matrix() added.
   W = W[, -1]
-  
+  num_cols = ncol(W) 
   # Remove constant columns from W.
-  constant_columns = which(apply(W, MARGIN = 2, var) == 0)
-  W = W[, -constant_columns]
+  nonconstant_columns = which(apply(W, MARGIN = 2, var) != 0)
+  W = W[, nonconstant_columns]
   if (verbose) {
-    cat("Removed", length(constant_columns), "constant columns from W.\n")
+    cat("Removed", num_cols-length(nonconstant_columns), "constant columns from W.\n")
   }
   
   # Remove linearly correlated columns from W before running gee.
@@ -142,7 +142,7 @@ estimate_att =
     # SG: This isn't general, but true for 2016 data.
     # CK: does this work with factor variables, etc.?
     # Seems better to check length(unique) for each variable.
-    nonbinary <- which(colMeans(W) > 1)
+    nonbinary <- which(apply(W,2,FUN = function(col) length(unique(col)) > 2))
 
     keep <- which(prescreen.uni(Y, A, W, alpha = prescreen[1], min=prescreen[2]))
     keep.nonbinary <- nonbinary[nonbinary %in% keep]
