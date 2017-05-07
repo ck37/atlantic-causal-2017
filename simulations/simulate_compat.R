@@ -77,8 +77,8 @@ sim_ATT = function(n,
   
   # Evaluate unit-level effect estimates
   pehe          = sd(sim_results$unit_estimates$est - Q1Wtrue + Q0Wtrue)
-  covered_units = mean((unit_estimates$ci_lower <= Q1Wtrue - Q0Wtrue) & 
-                         (unit_estimates$ci_upper >= Q1Wtrue - Q0Wtrue))
+  covered_units = mean((sim_results$unit_estimates$ci_lower <= Q1Wtrue - Q0Wtrue) & 
+                         (sim_results$unit_estimates$ci_upper >= Q1Wtrue - Q0Wtrue))
   
   # Compile results into a named vector.
   sim_output = c(Psi_0 = Psi_0,
@@ -93,7 +93,7 @@ sim_ATT = function(n,
 }
 
 # Set multicore-compatible seed.
-set.seed(1, "L'Ecuyer-CMRG")
+# set.seed(1, "L'Ecuyer-CMRG")
 
 # Run B sims of n=1000 observations, then compile results.
 B = 1000
@@ -101,7 +101,7 @@ n = 1000
 
 # Takes only a few seconds without using SL.
 # With SL (useSL = T) will take 10 minutes or more.
-res = mclapply(1:B, FUN = function(x) sim_ATT(n, useSL = F), mc.cores = 4)
+res = mclapply(1:100, FUN = function(x) sim_ATT(n, useSL = T,SL.library="SL.glm"), mc.cores = 4)
 
 if (F) {
   # Run non-parallel version manually if extra output is useful.
