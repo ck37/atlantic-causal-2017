@@ -17,10 +17,7 @@ Q0=function(v,coeff) v %*% coeff
 # function to create functional forms to simulate, using data from last year
 # currently works for formg="linear" and formQ="linear"
 create_siminfo = function(numvarsg=5,numvarsQ=10, formg="linear", formQ="linear"){
-  # formg=formQ="linear"
-  # numvarsg=10
-  # numvarsQ=5
-  # select the covariates at random
+  # getting samples of covariates to use
   Wz_names = sample(colnames(X_f),numvarsg)
   Wy_names = sample(colnames(X_f),numvarsQ)
   
@@ -46,7 +43,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=10, formg="linear", formQ="linear"
     A = rbinom(250,1,g0(Xz,coeff_z))
   }
   
-  # generate y design and true mean outcomes as well as Y
+  # generate true betas for y
   Xy = cbind(A,X_f[,Wy_names])
   Xy = model.matrix(form_y,Xy)
   
@@ -128,7 +125,7 @@ sim_ATT = function(siminfo, useSL = F,
 # NOTE: We do not want to create siminfo within the sim
 siminfo = create_siminfo() 
 siminfo
-sim_ATT(siminfo,useSL=T,SL.library="SL.glmnet")
+sim_ATT(siminfo,useSL=T,SL.library="SL.glm")
 
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
