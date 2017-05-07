@@ -196,17 +196,29 @@ estimate_att =
                     cvControl = list(V = V, stratifyCV = T)))
 
   if (class(g.SL) == "try-error") {
-    # TODO: fall back to a simpler SL algorithm before using glm().
     if (verbose) {
-      cat("SL failed for g, falling back to glm().\n")
+      cat("SL failed for g, trying simple SL.\n")
     }
-    g1W <- predict(glm(A ~ X, family = "binomial"), type = "response")
-  } else {
-    cat("Propensity score SuperLearner results:\n")
-    print(g.SL)
+      g.SL2 <- try(sl_fn(Y = A,
+                        X = data.frame(X),
+                        SL.library = c("SL.mean", "SL.glmnet"),
+                        verbose = verbose,
+                        family = "binomial",
+                        # Stratify the CV folds to maximize power.
+                        cvControl = list(V = V, stratifyCV = T)))
+      
+      if(class(g.SL2) == "try-error") {
+        if (verbose) {
+          cat("Both simple and complex SL failed for g, falling back to glm().\n")
+        }
+          g1W <- predict(glm(A ~ X, family = "binomial"), type = "response")
+      }
+        } else {
+          cat("Propensity score SuperLearner results:\n")
+          print(g.SL)
 
-    g1W <- g.SL$SL.predict
-  }
+          g1W <- g.SL$SL.predict
+        }
 
   # Bound g away from 0, 1.
   g1W <- .bound(g1W, gbounds)
@@ -223,7 +235,6 @@ estimate_att =
 
     # Outcome regression for control units.
     # Note that we are modeling Y (original scale) rather than Ystar (scaled).
-    # TODO: check for errors and fall back to simpler library like we do for g.
     m.SL.A0 <- try(sl_fn(Y = Y[A0],
                          X = as.data.frame(X[A0, ]),
                          # Predicted potential outcome for all observations.
@@ -237,7 +248,19 @@ estimate_att =
       cat("Outcome regression for controls:\n")
       print(m.SL.A0)
     } else {
-      cat("Outcome regression for controls failed!")
+      cat("Outcome regression for controls failed! Using simple SL instead.")
+      
+      m.SL.A0 <- try(sl_fn(Y = Y[A0],
+                           X = as.data.frame(X[A0, ]),
+                           # Predicted potential outcome for all observations.
+                           newX = as.data.frame(X),
+                           SL.library = c("SL.mean", "SL.glmnet"),
+                           family = family,
+                           verbose = verbose,
+                           cvControl = list(V = V)))
+      
+      cat("Outcome regression for controls:\n")
+      print(m.SL.A0)
     }
 
     if (verbose) {
@@ -246,7 +269,6 @@ estimate_att =
 
     # Outcome regression for treated units.
     # Note that we are modeling Y (original scale) rather than Ystar (scaled)
-    # TODO: check for errors and fall back to simpler library like we do for g.
     m.SL.A1 <- sl_fn(Y = Y[!A0],
                      X = as.data.frame(X[!A0,]),
                      # Predicted potential outcome for all observations.
@@ -260,7 +282,20 @@ estimate_att =
       cat("Outcome regression for treatment:\n")
       print(m.SL.A1)
     } else {
-      cat("Outcome regression for treatment failed!")
+      cat("Outcome regression for treatment failed! Using simple SL instead.")
+      
+      m.SL.A1 <- sl_fn(Y = Y[!A0],
+                       X = as.data.frame(X[!A0,]),
+                       # Predicted potential outcome for all observations.
+                       newX = as.data.frame(X),
+                       SL.library = c("SL.mean", "SL.glmnet"),
+                       family = family,
+                       verbose = verbose,
+                       cvControl = list(V = V))
+      
+      cat("Outcome regression for treatment:\n")
+      print(m.SL.A1)      
+      
     }
 
     Q0W = m.SL.A0$SL.predict
@@ -288,7 +323,6 @@ estimate_att =
 
     # Outcome regression for all units.
     # Note that we are modeling Y (original scale) rather than Ystar (scaled).
-    # TODO: check for errors and fall back to simpler library like we do for g.
     sl_outcome = try(sl_fn(Y = Y,
                            X = data.frame(A = A, X),
                            # Predicted potential outcome for all observations.
@@ -302,7 +336,19 @@ estimate_att =
       cat("Outcome regression:\n")
       print(sl_outcome)
     } else {
-      cat("Outcome regression failed!")
+      cat("Outcome regression failed! Using simple SL instead.")
+      
+      sl_outcome = try(sl_fn(Y = Y,
+                             X = data.frame(A = A, X),
+                             # Predicted potential outcome for all observations.
+                             newX = pred_X,
+                             SL.library = c("SL.mean", "SL.glmnet"),
+                             family = family,
+                             verbose = verbose,
+                             cvControl = list(V = V)))
+      
+      cat("Outcome regression:\n")
+      print(sl_outcome) 
     }
 
     # Order of predictions is Q0W then Q1W.
@@ -314,7 +360,6 @@ estimate_att =
 
   } # Done with pooled regression version.
   } # Done with glm vs SL option.
-
 
   colnames(Q.unbd) <- c("QAW", "Q0W", "Q1W")
 
