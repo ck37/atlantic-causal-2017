@@ -75,7 +75,8 @@ sim_ATT = function(siminfo, useSL = F,
                                   # "SL.ranger"#,
                                   #"SL.xgboost",
                                   #"SL.speedglm"
-                   )) {
+                   ),
+                   verbose = T) {
   
   
   # pull the sim info generated before--this should not change within this sim function
@@ -109,7 +110,8 @@ sim_ATT = function(siminfo, useSL = F,
                              W = X_f,
                              SL.library = SL.library,
                              g.SL.library = SL.library,
-                             useSL = useSL)
+                             useSL = useSL,
+                             verbose = verbose)
   
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
@@ -124,7 +126,9 @@ sim_ATT = function(siminfo, useSL = F,
   return(sim_output)
 }
 
+# NOTE: We do not want to create siminfo within the sim
 sim_ATT(siminfo)
+
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
@@ -137,7 +141,7 @@ res = mclapply(1:B, FUN = function(x) sim_ATT(useSL = F), mc.cores = 2)
 
 if (F) {
   # Run non-parallel version manually if extra output is useful.
-  res = lapply(1:B, FUN = function(x) sim_ATT(n))
+  res = lapply(1:B, FUN = function(x) sim_ATT(useSL = F))
 }
 
 if (F) {
@@ -156,8 +160,6 @@ if (F) {
 res = t(sapply(res, FUN = function(x) x))
 
 # Review coverage. We want this to be close to 95%.
-# Currently getting 94.5% so we're looking pretty good!
-# But 93.6 - 93.3% with SuperLearner :/
 mean(res[, 3])
 
 # Check bias in our estimates. We want this to be close to 0.
