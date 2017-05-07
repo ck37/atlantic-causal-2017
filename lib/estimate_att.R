@@ -153,8 +153,14 @@ estimate_att =
     # Initialize to NULL so that cbind() will still work.
     Wsq = NULL
 
-    if (length(keep.nonbinary) > 0) {
-      keep.sq <- keep.nonbinary[prescreen.uni(Y, A, W[, keep.nonbinary, drop = FALSE]^2, alpha=prescreen[1], min = 0)]
+    if (length(which(keep.nonbinary)) > 0) {
+      
+      new<-cbind.data.frame(names(data.frame(W[, keep.nonbinary])),prescreen.uni(Y, A, W[, keep.nonbinary]^2, alpha=prescreen[1], min = 0))
+      names(new)<-c("name","val")
+      
+      keep.nonbin_sub<-subset(new, val=="TRUE")
+      keep.sq<-names(data.frame(W)) %in% keep.nonbin_sub$name
+      
       if (sum(keep.sq) > 0) {
         Wsq <- W[, keep.sq, drop = FALSE]^2
         colnames(Wsq) <- paste0(colnames(Wsq), "sq")
