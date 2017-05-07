@@ -66,6 +66,7 @@ prescreen.nosq <- function(Y, X, ...){
 prescreen.uni <- function(Y, A, X, alpha = .05, min = 5, ...){
   pvalues <- rep(NA, ncol(X))
   for (i in 1:ncol(X)){
+    x=X[,i]
     if (var(x)==0|sum(x==0)>=(length(x)-1)|sum(x==1)>=(length(x)-1)) pvalues[i]=1 else {
       m <- lm(Y~ A+ X[,i])
       p <- try(summary(m)$coef[3,4], silent = TRUE)
