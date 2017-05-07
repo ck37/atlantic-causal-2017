@@ -29,7 +29,7 @@ update <- function(initdata) {
   
   # Update for Q(1, W) merely ensures mean(Q1W*A) = mean(Y*A), i.e., same mean as Y among treated.
   # This means we can replace with Ystar in estimator, though update may improve variance estimator
-  Q1Wstar = with(initdata, Q.Q1W + mean((Y - Q.Q1W) * A))
+  Q1Wstar = with(initdata, Q.Q1W + mean((Y - Q.Q1W) * A)/mean(A))
   
   QAWstar = with(initdata, ifelse(A == 1, Q1Wstar, Q0Wstar))
   
