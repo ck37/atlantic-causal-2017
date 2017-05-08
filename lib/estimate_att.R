@@ -408,6 +408,7 @@ estimate_att =
   new0     = model.matrix(~ A + X, data = dat0)
   new1     = model.matrix(~ A + X, data = dat1)
   
+  # If vcovHC returns NaNs, run a more stringent screener on X
   if(sum(is.nan(Sigma)) > 0){
     keep        = which(prescreen.uni(Y, A, X, alpha = .05, min=1))
     Xscr        = X[, keep]
@@ -419,6 +420,7 @@ estimate_att =
     new0     = model.matrix(~ A + Xscr, data = dat0)
     new1     = model.matrix(~ A + Xscr, data = dat1)
     
+    # If still getting NaNs, return NULL for CI
     if(sum(is.nan(Sigma)) > 0){
       cat("Unit-level effect inference failed.\n")
       ci_lower = NULL
