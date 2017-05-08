@@ -134,11 +134,9 @@ SL.library=list(c("SL.glm","prescreen.nosq"), c("SL.glmnet","prescreen.nosq"),
 siminfo = create_siminfo() 
 siminfo
 
-peter = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
-peter
-undebug(estimate_att)
-undebug(create_siminfo)
-debug(sim_ATT_jl)
+test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
+
+
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
