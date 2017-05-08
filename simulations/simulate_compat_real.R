@@ -21,9 +21,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear")
   # getting samples of covariates to use
   Wz_names = sample(colnames(X_f),numvarsg)
   Wy_names = sample(colnames(X_f),numvarsQ)
-  # Wz_names = colnames(X_f)[1:5]
-  # Wy_names = colnames(X_f)[1:5]
-  # 
+
   # create the linear form if linear main terms if linear is specified
   if (formg=="linear"){
   form_z = paste0("~",paste(Wz_names,collapse = "+"))
@@ -55,10 +53,6 @@ create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear")
   return(list(Xz=Xz,Xy=Xy,coeff_z=coeff_z,coeff_y=coeff_y))
 }
 
-# Y
-# data.frame(QAW,Y)
-# max(QAW)-min(QAW)
-# mean(Q1W-Q0W)
 
 # function just to give estimates for now
 sim_ATT_jl = function(siminfo, useSL = F,
@@ -113,8 +107,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
                              useSL = useSL,
                              verbose = verbose,
                              pooled_outcome = T)
-  # ,Qtrue=Qtrue,
-  # kept=names(siminfo$coeff_y)
+
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
   
@@ -135,13 +128,16 @@ siminfo = create_siminfo()
 siminfo
 
 test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
-
-
+test
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
-# Run B sims of n=1000 observations, then compile results.
-B = 100
+# Run B sims on the actual covs n = 250 from last years
+B = 2
+
+res = mclapply(1:B,
+               FUN = function(x) sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library),
+               mc.cores = 2)
 
 res = t(sapply(res, FUN = function(x) x))
 
