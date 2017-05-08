@@ -173,8 +173,9 @@ siminfo
 
 test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
 test
+
 # Set multicore-compatible seed.
-# set.seed(1, "L'Ecuyer-CMRG")
+set.seed(1, "L'Ecuyer-CMRG")
 
 ############
 ############
@@ -189,6 +190,10 @@ test
 # is interactions and squares of some continuous variables
 
 # Run B sims on the actual covs n = 250 from last year's data
+
+SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
+                c("SL.nnet","prescreen.nosq","All")) 
+
 siminfo = create_siminfo(numvarsg=5,numvarsQ=9,formg="linear",formQ="trans")
 B = 100
 
