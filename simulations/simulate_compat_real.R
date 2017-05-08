@@ -124,7 +124,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
 # NOTE: We do not want to create siminfo within the sim
 SL.library=list(c("SL.glm","prescreen.nosq"), c("SL.glmnet","prescreen.nosq"),
                 c("SL.nnet","prescreen.nosq")) 
-siminfo = create_siminfo() 
+siminfo = create_siminfo(numvarsg=5,numvarsQ=5) 
 siminfo
 
 test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
