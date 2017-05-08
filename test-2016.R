@@ -65,8 +65,7 @@ if (conf$sl_lib_type == "simple") {
   g_lib = c("SL.mean", "SL.glmnet")
 } else {
   q_lib = list(c("SL.glm", "All",  "prescreen.nosq"),
-                 # Not working, can we fix it?
-                 #c("SL.gam", "All", "prescreen.nosq"),
+                 c("SL.mgcv", "All", "prescreen.nosq"),
                  #c("sg.gbm.2500", "prescreen.nocat"),
                  "SL.xgboost",
                  "SL.randomForest",
