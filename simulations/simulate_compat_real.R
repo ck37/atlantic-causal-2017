@@ -76,6 +76,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear")
     Wy_names=c(contCols,others)
   }
 
+  Xz = model.matrix(form_z,X_f[,Wz_names])
   # generate A, making sure to have enough A=1 rep
   A=1
   while (mean(A)>=.66|mean(A)<=.33){
@@ -84,7 +85,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear")
     A = rbinom(250,1,g0(Xz,coeff_z))
   }
 
-  return(list(Xz=Xz,coeff_z=coeff_z,form_y,Wy_names=Wy_names))
+  return(list(Xz=Xz,coeff_z=coeff_z,form_y=form_y,Wy_names=Wy_names))
 }
 
 siminfo = create_siminfo(5,9,"squared","trans")
@@ -108,7 +109,8 @@ sim_ATT_jl = function(siminfo, useSL = F,
   # pull the sim info generated before--this should not change within this sim function
   Xz = siminfo$Xz
   coeff_z = siminfo$coeff_z
-  
+  Wy_names = siminfo$Wy_names
+  form_y = siminfo$form_y
   # generate A, making sure to have enough A=1 rep btwn 33 and 66 percent
   A=99
   while (mean(A)>=.66|mean(A)<=.33){
@@ -116,13 +118,13 @@ sim_ATT_jl = function(siminfo, useSL = F,
   }
   
   # generate y design and true mean outcomes as well as Y
+  Xy = cbind.data.frame(A,X_f[,Wy_names])
   Xy1 = Xy0 = Xy
   Xy[,"A"] = A
   Xy1[,"A"] = 1
   Xy0[,"A"] = 0
   
   # generate true betas for y
-  Xy = cbind.data.frame(A,X_f[,Wy_names])
   Xy1 = Xy0 = Xy
   Xy1[,"A"] = 1
   Xy0[,"A"] = 0 
@@ -149,7 +151,8 @@ sim_ATT_jl = function(siminfo, useSL = F,
                              g.SL.library = SL.library,
                              useSL = useSL,
                              verbose = verbose,
-                             pooled_outcome = T)
+                             pooled_outcome = T,
+                             prescreen=c(.10,10))
 
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
@@ -167,7 +170,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
 # NOTE: We do not want to create siminfo within the sim
 SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
                 c("SL.nnet","prescreen.nosq","All")) 
-siminfo = create_siminfo(numvarsg=5,numvarsQ=5,"linear","trans") 
+siminfo = create_siminfo(numvarsg=5,numvarsQ=9,"linear","trans") 
 siminfo
 
 test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
