@@ -76,8 +76,9 @@ create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear")
     Wy_names=c(contCols,others)
   }
 
+  # the design matrix for treatment mech
   Xz = model.matrix(form_z,X_f[,Wz_names])
-  # generate A, making sure to have enough A=1 rep
+  # generate A, making sure to have enough A=1 rep. Keep the betas that work
   A=1
   while (mean(A)>=.66|mean(A)<=.33){
     coeff_z = runif(length(colnames(Xz)),-5/ncol(Xz),5/ncol(Xz))/apply(Xz,2,FUN = function(x) {
@@ -88,8 +89,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear")
   return(list(Xz=Xz,coeff_z=coeff_z,form_y=form_y,Wy_names=Wy_names))
 }
 
-siminfo = create_siminfo(5,9,"squared","trans")
-# function just to give estimates for now
+# plug siminfo into sim function
 sim_ATT_jl = function(siminfo, useSL = F,
                    # Bounds used for Qbar when rescaled to [0, 1].
                    alpha = c(.0005, .9995),
@@ -124,14 +124,12 @@ sim_ATT_jl = function(siminfo, useSL = F,
   Xy1[,"A"] = 1
   Xy0[,"A"] = 0
   
-  # generate true betas for y
-  Xy1 = Xy0 = Xy
-  Xy1[,"A"] = 1
-  Xy0[,"A"] = 0 
+  # generate designs for outcome under A=1,A=0 and sample
   Xy = model.matrix(form_y,Xy)
   Xy1 = model.matrix(form_y,Xy1)
   Xy0 = model.matrix(form_y,Xy0)
   
+  #generate betas for outcome that are tame and then generate true means
   coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
     ifelse(var(x)==0,1,max(abs(x)))})
   QAWtrue = Q0(Xy,coeff_y)
