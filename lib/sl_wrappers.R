@@ -1,4 +1,36 @@
 #------- SL wrappers --------
+
+#Don't put both mgcv and gam in the library!
+SL.mgcv<-function(Y, X, newX, family, deg.gam = 2, cts.num = 4, ...) 
+{
+  SuperLearner:::.SL.require("mgcv")
+  if ("gam" %in% loadedNamespaces()) 
+    warning("mgcv and gam packages are both in use. You might see an error because both packages use the same function names.")
+  cts.x <- apply(X, 2, function(x) (length(unique(x)) > cts.num))
+  if (sum(!cts.x) > 0) {
+    gam.model <- as.formula(paste("Y~", paste(paste("s(", 
+                                                    colnames(X[, cts.x, drop = FALSE]), ", k=", deg.gam, 
+                                                    ")", sep = ""), collapse = "+"), "+", paste(colnames(X[, 
+                                                                                                           !cts.x, drop = FALSE]), collapse = "+")))
+  }
+  else {
+    gam.model <- as.formula(paste("Y~", paste(paste("s(", 
+                                                    colnames(X[, cts.x, drop = FALSE]), ", k=", deg.gam, 
+                                                    ")", sep = ""), collapse = "+")))
+  }
+  if (sum(!cts.x) == length(cts.x)) {
+    gam.model <- as.formula(paste("Y~", paste(colnames(X), 
+                                              collapse = "+"), sep = ""))
+  }
+  fit.gam <- mgcv::gam(gam.model, data = X, family = family)
+  pred <- mgcv::predict.gam(fit.gam, newdata = newX, type = "response")
+  fit <- list(object = fit.gam)
+  out <- list(pred = pred, fit = fit)
+  class(out$fit) <- c("SL.mgcv")
+  return(out)
+}
+
+
 SL.bart <- function(Y, X, newX, family, printevery = 100000, keeptrainfits = FALSE, ...) {
   SuperLearner:::.SL.require("dbarts")
   fit.bart <- bart(x.train = X, y.train = Y, x.test = newX, printevery = printevery, keeptrainfits = keeptrainfits,
