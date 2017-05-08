@@ -398,48 +398,51 @@ estimate_att =
   }
   
   # Sandwich variance estimate for linear model with all effect modifiers
-  glm_fit = suppressWarnings(glm(Y ~ A + X, family = 'gaussian'))
-  Sigma   = vcovHC(glm_fit, type = "HC1")
-  
-  # Generate matrix of differences in model matrices for treated and controls
-  dat0     = dat1 = data.frame(A,X)
-  dat0$A   = 0
-  dat1$A   = 1
-  new0     = model.matrix(~ A + X, data = dat0)
-  new1     = model.matrix(~ A + X, data = dat1)
-  
-  # If vcovHC returns NaNs, run a more stringent screener on X
-  if(sum(is.nan(Sigma)) > 0){
-    keep        = which(prescreen.uni(Y, A, X, alpha = .05, min=1))
-    Xscr        = X[, keep]
-    glm_fit_scr = suppressWarnings(glm(Y ~ A + Xscr, family = 'gaussian'))
-    Sigma       = vcovHC(glm_fit, type = "HC1")
-    dat0     = dat1 = data.frame(A,Xscr)
+  # Disabled for now, coverage is too poor.
+  if (F) {
+    glm_fit = suppressWarnings(glm(Y ~ A + X, family = 'gaussian'))
+    Sigma   = vcovHC(glm_fit, type = "HC1")
+    
+    # Generate matrix of differences in model matrices for treated and controls
+    dat0     = dat1 = data.frame(A,X)
     dat0$A   = 0
     dat1$A   = 1
-    new0     = model.matrix(~ A + Xscr, data = dat0)
-    new1     = model.matrix(~ A + Xscr, data = dat1)
+    new0     = model.matrix(~ A + X, data = dat0)
+    new1     = model.matrix(~ A + X, data = dat1)
     
-    # If still getting NaNs, return NULL for CI
+    # If vcovHC returns NaNs, run a more stringent screener on X
     if(sum(is.nan(Sigma)) > 0){
-      cat("Unit-level effect inference failed.\n")
-      ci_lower = NULL
-      ci_upper = NULL
+      keep        = which(prescreen.uni(Y, A, X, alpha = .05, min=1))
+      Xscr        = X[, keep]
+      glm_fit_scr = suppressWarnings(glm(Y ~ A + Xscr, family = 'gaussian'))
+      Sigma       = vcovHC(glm_fit, type = "HC1")
+      dat0     = dat1 = data.frame(A,Xscr)
+      dat0$A   = 0
+      dat1$A   = 1
+      new0     = model.matrix(~ A + Xscr, data = dat0)
+      new1     = model.matrix(~ A + Xscr, data = dat1)
+      
+      # If still getting NaNs, return NULL for CI
+      if(sum(is.nan(Sigma)) > 0){
+        cat("Unit-level effect inference failed.\n")
+        ci_lower = NULL
+        ci_upper = NULL
+      }
     }
+    
+    new_diff = new1 - new0
+    
+    # Create vector of variances for unit-level effect estimates
+    unit_var = apply(new_diff, 1, function(x){t(x) %*% Sigma %*% x})
+    
+    ci_lower = unit_est - qnorm(.975) * sqrt(unit_var)
+    ci_upper = unit_est + qnorm(.975) * sqrt(unit_var)
   }
-  
-  new_diff = new1 - new0
-  
-  # Create vector of variances for unit-level effect estimates
-  unit_var = apply(new_diff, 1, function(x){t(x) %*% Sigma %*% x})
-  
-  ci_lower = unit_est - qnorm(.975) * sqrt(unit_var)
-  ci_upper = unit_est + qnorm(.975) * sqrt(unit_var)
 
   # Compile unit-level effects, preferable with a ci_lower and ci_upper.
   unit_estimates = data.frame(est = unit_est,
-                              ci_lower = ci_lower,
-                              ci_upper = ci_upper)
+                              ci_lower = NA,
+                              ci_upper = NA)
 
   time_end = proc.time()
 
