@@ -189,7 +189,7 @@ test
 # is interactions and squares of some continuous variables
 
 # Run B sims on the actual covs n = 250 from last year's data
-siminfo = create_siminfo(numvarsg=5,numvarsQ=9,"linear","trans")
+siminfo = create_siminfo(numvarsg=5,numvarsQ=9,formg="linear",formQ="trans")
 B = 100
 
 res = mclapply(1:B,
