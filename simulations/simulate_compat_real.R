@@ -155,12 +155,17 @@ sim_ATT_jl = function(siminfo, useSL = F,
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
   
+  # Proportion of unit-level CIs containing the true unit-level effect.
+  covered_units = mean((sim_results$unit_estimates$ci_lower <= Q1Wtrue - Q0Wtrue) &
+                  (sim_results$unit_estimates$ci_upper >= Q1Wtrue - Q0Wtrue))
+  
   # Compile results into a named vector.
   sim_output = c(Psi_0 = Psi_0,
               Psi = sim_results$est,
               covered = covered,
               conf_interval = c(sim_results$ci_lower,sim_results$ci_upper),
-              standard_error = sim_results$se)
+              standard_error = sim_results$se,
+              covered_units = covered_units)
   
   return(sim_output)
 }
