@@ -15,8 +15,10 @@ X_f = read.csv("inbound/pre_data/X_subset_y.csv",header=FALSE)
 g0=function(v,coeff) plogis(v %*% coeff)
 Q0=function(v,coeff) v %*% coeff
 
+apply(X_f,2,FUN=function(x) length(unique(x)))
 whichCont = which(apply(X_f,2,
-                        FUN = function(x) length(unique(x))>5&!(is.factor(x))))
+                        FUN = function(x) length(unique(x))>12&!(is.factor(x))))
+colnames(X_f)
 whichBin = which(!(1:58 %in% whichCont))
 
 # function to create functional forms to simulate, using data from last year
@@ -103,6 +105,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
                                   #"SL.xgboost",
                                   #"SL.speedglm"
                    ),
+                   prescreen=c(.05,10),
                    verbose = T) {
   
   
@@ -150,7 +153,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
                              useSL = useSL,
                              verbose = verbose,
                              pooled_outcome = T,
-                             prescreen=c(.10,10))
+                             prescreen=prescreen)
 
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
@@ -168,12 +171,14 @@ sim_ATT_jl = function(siminfo, useSL = F,
 # NOTE: We do not want to create siminfo within the sim
 SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
                 c("SL.nnet","prescreen.nosq","All")) 
-siminfo = create_siminfo(numvarsg=5,numvarsQ=9,"linear","trans") 
+siminfo = create_siminfo(numvarsg=5,numvarsQ=9,"trans","trans") 
 siminfo
+
+X_f[1:10,siminfo$Wy_names]
 
 test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
 test
-
+X_f[,"V21"]
 # Set multicore-compatible seed.
 set.seed(1, "L'Ecuyer-CMRG")
 
@@ -191,18 +196,20 @@ set.seed(1, "L'Ecuyer-CMRG")
 
 # Run B sims on the actual covs n = 250 from last year's data
 
-SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
+SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq","All"),
                 c("SL.nnet","prescreen.nosq","All")) 
 
-siminfo = create_siminfo(numvarsg=5,numvarsQ=9,formg="linear",formQ="trans")
+siminfo = create_siminfo(numvarsg=15,numvarsQ=15,formg="squared",formQ="trans")
 B = 100
 
 res = mclapply(1:B,
-               FUN = function(x) sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library),
+               FUN = function(x) {
+                 sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
+                 },
                mc.cores = 2)
 
 res = t(sapply(res, FUN = function(x) x))
 
-# Review coverage. We want this to be close to 95%.
+# Review coverage. We want this to be close to 95%. 
 mean(res[, 3])
 
