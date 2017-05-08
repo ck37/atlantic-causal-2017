@@ -398,38 +398,43 @@ estimate_att =
   }
   
   # Sandwich variance estimate for linear model with all effect modifiers
-  # (Currently effect modification disabled until we work out rank issue.)
-  # Capture the unnecessary output created by gee().
-  # TODO: replace gee package with a more recent one; this one is old and crappy.
-  capture.output({
-    gee = try(gee::gee(Y ~ A + W, id = 1:n, subset = T, na.action = na.omit),
-            silent = verbose)
-  })
+  glm_fit = suppressWarnings(glm(Y ~ A + X, family = 'gaussian'))
+  Sigma   = vcovHC(glm_fit, type = "HC1")
   
-  # If successfull class will be c("gee", "glm"). Otherwise will be "try-error".
-  if ("gee" %in% class(gee)) {
-    Sigma = gee$robust.variance
+  # Generate matrix of differences in model matrices for treated and controls
+  dat0     = dat1 = data.frame(A,X)
+  dat0$A   = 0
+  dat1$A   = 1
+  new0     = model.matrix(~ A + X, data = dat0)
+  new1     = model.matrix(~ A + X, data = dat1)
   
-    # Generate matrix of differences in model matrices for treated and controls
-    dat0     = dat1 = data.frame(A,W)
+  # If vcovHC returns NaNs, run a more stringent screener on X
+  if(sum(is.nan(Sigma)) > 0){
+    keep        = which(prescreen.uni(Y, A, X, alpha = .05, min=1))
+    Xscr        = X[, keep]
+    glm_fit_scr = suppressWarnings(glm(Y ~ A + Xscr, family = 'gaussian'))
+    Sigma       = vcovHC(glm_fit, type = "HC1")
+    dat0     = dat1 = data.frame(A,Xscr)
     dat0$A   = 0
     dat1$A   = 1
-    new0     = model.matrix(~ A + W, data = dat0)
-    new1     = model.matrix(~ A + W, data = dat1)
-    new_diff = new1 - new0
-  
-    # Create vector of variances for unit-level effect estimates
-    unit_var = apply(new_diff, 1, function(x){t(x) %*% Sigma %*% x})
+    new0     = model.matrix(~ A + Xscr, data = dat0)
+    new1     = model.matrix(~ A + Xscr, data = dat1)
     
-    ci_lower = unit_est - qnorm(.975) * sqrt(unit_var)
-    ci_upper = unit_est + qnorm(.975) * sqrt(unit_var)
-  } else {
-    if (verbose) cat("GEE failed for unit-level effect inference.\n")
-    print(gee)
-    # Fall back to NAs for the unit-level CI.
-    ci_lower = NA
-    ci_upper = NA
+    # If still getting NaNs, return NULL for CI
+    if(sum(is.nan(Sigma)) > 0){
+      cat("Unit-level effect inference failed.\n")
+      ci_lower = NULL
+      ci_upper = NULL
+    }
   }
+  
+  new_diff = new1 - new0
+  
+  # Create vector of variances for unit-level effect estimates
+  unit_var = apply(new_diff, 1, function(x){t(x) %*% Sigma %*% x})
+  
+  ci_lower = unit_est - qnorm(.975) * sqrt(unit_var)
+  ci_upper = unit_est + qnorm(.975) * sqrt(unit_var)
 
   # Compile unit-level effects, preferable with a ci_lower and ci_upper.
   unit_estimates = data.frame(est = unit_est,

@@ -53,7 +53,10 @@ update <- function(initdata) {
     warning("Fluctuation did not change any potential outcomes for treated units.")
   }
   
-  Dstar = with(initdata, ((A == 1) - (A == 0) * g / (1 - g)) / mean(A) * (Y - QAWstar))
+  psi   = with(initdata, sum((A == 1) * (Y - Q0Wstar)) / sum(A))
+  
+  Dstar = with(initdata, ((A == 1) - (A == 0) * g / (1 - g)) / mean(A) * (Y - QAWstar) + 
+                          (A == 1) / mean(A) * (Q1Wstar - Q0Wstar - psi))
 
   num_nas = sum(is.na(Dstar))
   if (num_nas > 0) {
@@ -61,7 +64,7 @@ update <- function(initdata) {
   }
   
   # Compile results.
-  results = c(psi     = with(initdata, sum((A == 1) * (Y - Q0Wstar)) / sum(A)),
+  results = c(psi     = psi,
               var.psi = (n-1)*var(Dstar)/n^2)
   
   return(results)
