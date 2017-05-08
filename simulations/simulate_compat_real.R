@@ -15,45 +15,79 @@ X_f = read.csv("inbound/pre_data/X_subset_y.csv",header=FALSE)
 g0=function(v,coeff) plogis(v %*% coeff)
 Q0=function(v,coeff) v %*% coeff
 
-# function to create functional forms to simulate, using data from last year
-# currently works for formg="linear" and formQ="linear"
-create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear"){
-  # getting samples of covariates to use
-  Wz_names = sample(colnames(X_f),numvarsg)
-  Wy_names = sample(colnames(X_f),numvarsQ)
+whichCont = which(apply(X_f,2,
+                        FUN = function(x) length(unique(x))>5&!(is.factor(x))))
+whichBin = which(!(1:58 %in% whichCont))
 
-  # create the linear form if linear main terms if linear is specified
+# function to create functional forms to simulate, using data from last year
+# allowed forms are "linear","squared" and "trans"
+create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear"){
+
+  # create linear main terms form if linear is specified
   if (formg=="linear"){
-  form_z = paste0("~",paste(Wz_names,collapse = "+"))
-  form_z = formula(form_z)
+    Wz_names = sample(colnames(X_f),numvarsg)
+    form_z = paste0("~",paste(Wz_names,collapse = "+"))
+    form_z = formula(form_z)
   }
   
   if (formQ=="linear"){
+    Wy_names = sample(colnames(X_f),numvarsQ)
     form_y = paste0("~",paste(c("A",Wy_names),collapse = "+"))
     form_y = formula(form_y)
   }
-
-  # create treatment design
-  Xz = model.matrix(form_z,X_f[,Wz_names])
+  
+  if (formg=="squared"){
+    contCols = colnames(X_f)[sample(whichCont,floor(numvarsg/2))]
+    others = colnames(X_f)[sample(whichBin,ceiling(numvarsg/2))]
+    formCont = paste(paste0(paste0("I(",contCols),"^2)"),collapse="+")
+    formOthers = paste(others,collapse="+")
+    form_z = paste0("~",formOthers,"+",formCont)
+    form_z = formula(form_z)
+    Wz_names=c(contCols,others)
+  }
+  
+  if (formQ=="squared"){
+    contCols = colnames(X_f)[sample(whichCont,floor(numvarsQ/2))]
+    others = colnames(X_f)[sample(whichBin,ceiling(numvarsQ/2))]
+    formCont = paste(paste0(paste0("I(",contCols),"^2)"),collapse="+")
+    formOthers = paste0("A*(",paste(others,collapse="+"),")")
+    form_y = paste0("~",formOthers,"+",formCont)
+    form_y = formula(form_y)
+    Wy_names=c(contCols,others)
+  }
+  
+  if (formg=="trans"){
+    contCols = colnames(X_f)[sample(whichCont,floor(numvarsg/2))]
+    others = colnames(X_f)[sample(whichBin,ceiling(numvarsg/2))]
+    formCont = paste(paste0(paste0("I(cos(",contCols),"))"),collapse="+")
+    formOthers = paste(others,collapse="+")
+    form_z = paste0("~",formOthers,"+",formCont)
+    form_z = formula(form_z)
+    Wz_names=c(contCols,others)
+  }
+  
+  if (formQ=="trans"){
+    contCols = colnames(X_f)[sample(whichCont,floor(numvarsQ/2))]
+    others = colnames(X_f)[sample(whichBin,ceiling(numvarsQ/2))]
+    formCont = paste(paste0(paste0("I(sin(",contCols),"))"),collapse="+")
+    formOthers = paste0("A*(",paste(others,collapse="+"),")")
+    form_y = paste0("~",formOthers,"+",formCont)
+    form_y = formula(form_y)
+    Wy_names=c(contCols,others)
+  }
 
   # generate A, making sure to have enough A=1 rep
   A=1
   while (mean(A)>=.66|mean(A)<=.33){
-    coeff_z = runif(length(colnames(Xz)),-5/numvarsg,5/numvarsg)/apply(Xz,2,FUN = function(x) {
+    coeff_z = runif(length(colnames(Xz)),-5/ncol(Xz),5/ncol(Xz))/apply(Xz,2,FUN = function(x) {
       ifelse(var(x)==0,1,max(abs(x)))})
     A = rbinom(250,1,g0(Xz,coeff_z))
   }
-  
-  # generate true betas for y
-  Xy = cbind(A,X_f[,Wy_names])
-  Xy = model.matrix(form_y,Xy)
-  
-  coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
-    ifelse(var(x)==0,1,max(abs(x)))})
-  return(list(Xz=Xz,Xy=Xy,coeff_z=coeff_z,coeff_y=coeff_y))
+
+  return(list(Xz=Xz,coeff_z=coeff_z,form_y,Wy_names=Wy_names))
 }
 
-
+siminfo = create_siminfo(5,9,"squared","trans")
 # function just to give estimates for now
 sim_ATT_jl = function(siminfo, useSL = F,
                    # Bounds used for Qbar when rescaled to [0, 1].
@@ -73,9 +107,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
   
   # pull the sim info generated before--this should not change within this sim function
   Xz = siminfo$Xz
-  Xy = siminfo$Xy
   coeff_z = siminfo$coeff_z
-  coeff_y = siminfo$coeff_y
   
   # generate A, making sure to have enough A=1 rep btwn 33 and 66 percent
   A=99
@@ -89,6 +121,17 @@ sim_ATT_jl = function(siminfo, useSL = F,
   Xy1[,"A"] = 1
   Xy0[,"A"] = 0
   
+  # generate true betas for y
+  Xy = cbind.data.frame(A,X_f[,Wy_names])
+  Xy1 = Xy0 = Xy
+  Xy1[,"A"] = 1
+  Xy0[,"A"] = 0 
+  Xy = model.matrix(form_y,Xy)
+  Xy1 = model.matrix(form_y,Xy1)
+  Xy0 = model.matrix(form_y,Xy0)
+  
+  coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
+    ifelse(var(x)==0,1,max(abs(x)))})
   QAWtrue = Q0(Xy,coeff_y)
   Q1Wtrue = Q0(Xy1,coeff_y)
   Q0Wtrue = Q0(Xy0,coeff_y)
@@ -122,9 +165,9 @@ sim_ATT_jl = function(siminfo, useSL = F,
 }
 
 # NOTE: We do not want to create siminfo within the sim
-SL.library=list(c("SL.glm","prescreen.nosq"), c("SL.glmnet","prescreen.nosq"),
-                c("SL.nnet","prescreen.nosq")) 
-siminfo = create_siminfo(numvarsg=5,numvarsQ=5) 
+SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
+                c("SL.nnet","prescreen.nosq","All")) 
+siminfo = create_siminfo(numvarsg=5,numvarsQ=5,"linear","trans") 
 siminfo
 
 test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
