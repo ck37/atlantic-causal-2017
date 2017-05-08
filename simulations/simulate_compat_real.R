@@ -23,7 +23,7 @@ whichBin = which(!(1:58 %in% whichCont))
 
 # function to create functional forms to simulate, using data from last year
 # allowed forms are "linear","squared" and "trans"
-create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear"){
+create_siminfo = function(numvarsg=15,numvarsQ=15, formg="linear", formQ="linear"){
 
   # create linear main terms form if linear is specified
   if (formg=="linear"){
@@ -87,8 +87,12 @@ create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear")
       ifelse(var(x)==0,1,max(abs(x)))})
     A = rbinom(250,1,g0(Xz,coeff_z))
   }
-
-  return(list(Xz=Xz,coeff_z=coeff_z,form_y=form_y,Wy_names=Wy_names))
+  
+  Xy = cbind.data.frame(A,X_f[,Wy_names])
+  Xy = model.matrix(form_y,Xy)
+  coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
+    ifelse(var(x)==0,1,max(abs(x)))})
+  return(list(Xz=Xz,coeff_z=coeff_z,coeff_y=coeff_y,form_y=form_y,Wy_names=Wy_names))
 }
 
 # plug siminfo into sim function
@@ -112,8 +116,10 @@ sim_ATT_jl = function(siminfo, useSL = F,
   # pull the sim info generated before--this should not change within this sim function
   Xz = siminfo$Xz
   coeff_z = siminfo$coeff_z
-  Wy_names = siminfo$Wy_names
+  coeff_y = siminfo$coeff_y
   form_y = siminfo$form_y
+  Wy_names = siminfo$Wy_names
+  
   # generate A, making sure to have enough A=1 rep btwn 33 and 66 percent
   A=99
   while (mean(A)>=.66|mean(A)<=.33){
@@ -123,7 +129,6 @@ sim_ATT_jl = function(siminfo, useSL = F,
   # generate y design and true mean outcomes as well as Y
   Xy = cbind.data.frame(A,X_f[,Wy_names])
   Xy1 = Xy0 = Xy
-  Xy[,"A"] = A
   Xy1[,"A"] = 1
   Xy0[,"A"] = 0
   
@@ -133,13 +138,12 @@ sim_ATT_jl = function(siminfo, useSL = F,
   Xy0 = model.matrix(form_y,Xy0)
   
   #generate betas for outcome that are tame and then generate true means
-  coeff_y = runif(length(colnames(Xy)),-3,3)/apply(Xy,2,FUN = function(x) {
-    ifelse(var(x)==0,1,max(abs(x)))})
+
   QAWtrue = Q0(Xy,coeff_y)
   Q1Wtrue = Q0(Xy1,coeff_y)
   Q0Wtrue = Q0(Xy0,coeff_y)
   # add noise to the true mean
-  Y = rnorm(250,QAWtrue,sd(QAWtrue)/3)
+  Y = rnorm(250,QAWtrue,sd(QAWtrue))
   Qtrue = data.frame(Q0 = Q0Wtrue,Q1 = Q1Wtrue)
   
   # Target parameter: sample average treatment effect on treated units (SATT).
