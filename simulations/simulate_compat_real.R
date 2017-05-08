@@ -17,11 +17,13 @@ Q0=function(v,coeff) v %*% coeff
 
 # function to create functional forms to simulate, using data from last year
 # currently works for formg="linear" and formQ="linear"
-create_siminfo = function(numvarsg=5,numvarsQ=10, formg="linear", formQ="linear"){
+create_siminfo = function(numvarsg=5,numvarsQ=5, formg="linear", formQ="linear"){
   # getting samples of covariates to use
   Wz_names = sample(colnames(X_f),numvarsg)
   Wy_names = sample(colnames(X_f),numvarsQ)
-  
+  # Wz_names = colnames(X_f)[1:5]
+  # Wy_names = colnames(X_f)[1:5]
+  # 
   # create the linear form if linear main terms if linear is specified
   if (formg=="linear"){
   form_z = paste0("~",paste(Wz_names,collapse = "+"))
@@ -35,7 +37,7 @@ create_siminfo = function(numvarsg=5,numvarsQ=10, formg="linear", formQ="linear"
 
   # create treatment design
   Xz = model.matrix(form_z,X_f[,Wz_names])
-  
+
   # generate A, making sure to have enough A=1 rep
   A=1
   while (mean(A)>=.66|mean(A)<=.33){
@@ -80,7 +82,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
   Xy = siminfo$Xy
   coeff_z = siminfo$coeff_z
   coeff_y = siminfo$coeff_y
-
+  
   # generate A, making sure to have enough A=1 rep btwn 33 and 66 percent
   A=99
   while (mean(A)>=.66|mean(A)<=.33){
@@ -89,6 +91,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
   
   # generate y design and true mean outcomes as well as Y
   Xy1 = Xy0 = Xy
+  Xy[,"A"] = A
   Xy1[,"A"] = 1
   Xy0[,"A"] = 0
   
@@ -97,7 +100,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
   Q0Wtrue = Q0(Xy0,coeff_y)
   # add noise to the true mean
   Y = rnorm(250,QAWtrue,sd(QAWtrue)/3)
-  Qtrue = data.frame(Q1 = Q1Wtrue, Q0 = Q0Wtrue)
+  Qtrue = data.frame(Q0 = Q0Wtrue,Q1 = Q1Wtrue)
   
   # Target parameter: sample average treatment effect on treated units (SATT).
   Psi_0 = sum((A == 1) * (Q1Wtrue - Q0Wtrue)) / sum(A == 1)
@@ -108,8 +111,10 @@ sim_ATT_jl = function(siminfo, useSL = F,
                              SL.library = SL.library,
                              g.SL.library = SL.library,
                              useSL = useSL,
-                             verbose = verbose,Qtrue=Qtrue)
-  
+                             verbose = verbose,
+                             pooled_outcome = T)
+  # ,Qtrue=Qtrue,
+  # kept=names(siminfo$coeff_y)
   # Indicator for our CI containing the true parameter.
   covered = (Psi_0 >= sim_results$ci_lower) && (Psi_0 <= sim_results$ci_upper)
   
@@ -124,38 +129,21 @@ sim_ATT_jl = function(siminfo, useSL = F,
 }
 
 # NOTE: We do not want to create siminfo within the sim
+SL.library=list(c("SL.glm","prescreen.nosq"), c("SL.glmnet","prescreen.nosq"),
+                c("SL.nnet","prescreen.nosq")) 
 siminfo = create_siminfo() 
 siminfo
-peter = sim_ATT_jl(siminfo,useSL=T,SL.library="SL.glm")
-head(peter$Qtrue)
+
+peter = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
+peter
 undebug(estimate_att)
+undebug(create_siminfo)
+debug(sim_ATT_jl)
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
 # Run B sims of n=1000 observations, then compile results.
 B = 100
-
-# Takes only a few seconds without using SL.
-# With SL (useSL = T) will take 10 minutes or more.
-res = mclapply(1:B, FUN = function(x) sim_ATT(siminfo,useSL=T), mc.cores = 4)
-
-if (F) {
-  # Run non-parallel version manually if extra output is useful.
-  res = lapply(1:B, FUN = function(x) sim_ATT(useSL = F))
-}
-
-if (F) {
-  # Run this if desired for debugging.
-  debugonce(sim_ATT)
-  
-  # Run version with SL fit for Q.
-  # This takes a very long time to run 1000 times, like 30 minutes to 1+ hrs
-  # depending on the SL library.
-  res = mclapply(1:B, FUN = function(x) sim_ATT(n, useSL = T), mc.cores = 4)
-  
-  # Single-run version for testing:
-  res = lapply(1:50, FUN = function(x) sim_ATT(n, useSL = T))
-}
 
 res = t(sapply(res, FUN = function(x) x))
 
