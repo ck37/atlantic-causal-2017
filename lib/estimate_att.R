@@ -26,7 +26,7 @@ estimate_att =
            verbose = F,
            # Added optional prescreening: (0,0) if you don't want it
            # First term is p-value cut-off, second is minimum # of terms.
-           prescreen = c(0.05, 10),
+           prescreen = c(0.20, 12),
            # If T use SL estimation, otherwise use GLM.
            useSL = T
            ) {
