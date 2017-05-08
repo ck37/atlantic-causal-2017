@@ -176,8 +176,21 @@ test
 # Set multicore-compatible seed.
 # set.seed(1, "L'Ecuyer-CMRG")
 
-# Run B sims on the actual covs n = 250 from last years
-B = 2
+############
+############
+### TEST HERE--RUN IT! 
+############
+############
+
+# NOTE: siminfo takes arguments:
+# numvarsg, numvarsQ, formg and formQ
+# formg and formQ can each be one of "trans","linear","squared"
+# trans offers transcendental forms, linear is main terms, squared
+# is interactions and squares of some continuous variables
+
+# Run B sims on the actual covs n = 250 from last year's data
+siminfo = create_siminfo(numvarsg=5,numvarsQ=9,"linear","trans")
+B = 100
 
 res = mclapply(1:B,
                FUN = function(x) sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library),
@@ -188,6 +201,3 @@ res = t(sapply(res, FUN = function(x) x))
 # Review coverage. We want this to be close to 95%.
 mean(res[, 3])
 
-# Check bias in our estimates. We want this to be close to 0.
-mean(res[, 2]) - mean(res[, 1])
-hist((res[,2]-res[,1]))
