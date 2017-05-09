@@ -62,10 +62,9 @@ for (filename in names(files)) {
 
   cat("Log filename:", output_filename, "\n")
 
-  # Run targeted_learner.R as a shell script to generate output.
   time_start = proc.time()
 
-  # This will take 10+ minutes per dataset most likely.
+  # Run targeted_learner.R as a shell script to generate output.
   result = system2("./targeted_learning.R",
           args = c(csv_filename,
                    out1_filename,
@@ -76,7 +75,7 @@ for (filename in names(files)) {
           #stdout = "", stderr = "")
 
   time_elapsed = proc.time() - time_start
-  cat("Time elapsed:", time_elapsed["elapsed"], "seconds.\n")
+  cat("Time elapsed", time_elapsed["elapsed"], "\n")
 
   # result = 0 means that the command executed successfully.
   if (!result) {
