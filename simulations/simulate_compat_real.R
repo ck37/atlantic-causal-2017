@@ -185,15 +185,17 @@ SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nos
                 c("SL.nnet","prescreen.nosq","All"))
 
 SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
-                c("SL.nnet","prescreen.nosq","All","SL.bartMachine")) 
-SL.library=list(c("SL.bartMachine")) 
-g.SL.library="SL.bartMachine"
+                c("SL.nnet","prescreen.nosq","All")) 
+SL.library=list("SL.glm_em20","SL.glm_em05","SL.glmnet_em15_1","SL.glmnet_em15_0.5",
+                "SL.glmnet_em15_0") 
+g.SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
+                  c("SL.nnet","prescreen.nosq","All")) 
 siminfo = create_siminfo(numvarsg=15,numvarsQ=15,"trans","trans") 
 siminfo
 
 test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library,g.SL.library=g.SL.library)
 test
-debug
+undebug(estimate_att)
 X_f[,"V21"]
 # Set multicore-compatible seed.
 set.seed(1, "L'Ecuyer-CMRG")
