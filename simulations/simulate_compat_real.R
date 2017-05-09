@@ -2,7 +2,7 @@ source("lib/weighted_update.R")
 source("lib/sl_wrappers.R")
 source("lib/bound.R")
 source("lib/estimate_att.R")
-source("lib/estimate_att_jl.R")
+
 library(ggplot2)
 library(parallel)
 library(SuperLearner)
@@ -109,6 +109,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
                                   #"SL.xgboost",
                                   #"SL.speedglm"
                    ),
+                   g.SL.library,
                    prescreen=c(.05,10),
                    verbose = T) {
   
@@ -153,7 +154,7 @@ sim_ATT_jl = function(siminfo, useSL = F,
                              Y = Y, 
                              W = X_f,
                              SL.library = SL.library,
-                             g.SL.library = SL.library,
+                             g.SL.library = g.SL.library,
                              useSL = useSL,
                              verbose = verbose,
                              pooled_outcome = T,
@@ -181,14 +182,18 @@ sim_ATT_jl = function(siminfo, useSL = F,
 
 # NOTE: We do not want to create siminfo within the sim
 SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
-                c("SL.nnet","prescreen.nosq","All")) 
-siminfo = create_siminfo(numvarsg=5,numvarsQ=9,"trans","trans") 
+                c("SL.nnet","prescreen.nosq","All"))
+
+SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
+                c("SL.nnet","prescreen.nosq","All","SL.bartMachine")) 
+SL.library=list(c("SL.bartMachine")) 
+g.SL.library="SL.bartMachine"
+siminfo = create_siminfo(numvarsg=15,numvarsQ=15,"trans","trans") 
 siminfo
 
-X_f[1:10,siminfo$Wy_names]
-
-test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
+test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library,g.SL.library=g.SL.library)
 test
+debug
 X_f[,"V21"]
 # Set multicore-compatible seed.
 set.seed(1, "L'Ecuyer-CMRG")
@@ -207,18 +212,21 @@ set.seed(1, "L'Ecuyer-CMRG")
 
 # Run B sims on the actual covs n = 250 from last year's data
 
-SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq","All"),
-                c("SL.nnet","prescreen.nosq","All")) 
+SL.library=list(c("SL.glm_em20")) 
 
 siminfo = create_siminfo(numvarsg=15,numvarsQ=15,formg="squared",formQ="trans")
-B = 100
+t = proc.time()
+B = 1
 
 res = mclapply(1:B,
                FUN = function(x) {
-                 sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library)
+                 sim_ATT_jl(siminfo,useSL=F,SL.library=SL.library,
+                            prescreen = c(.25,10))
                  },
                mc.cores = 2)
 
+time = proc.time()-t
+time
 res = t(sapply(res, FUN = function(x) x))
 
 # Review coverage. We want this to be close to 95%. 
