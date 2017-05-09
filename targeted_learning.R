@@ -78,8 +78,10 @@ if (conf$verbose) {
   cat("Cores detected:", num_cores, "\n")
 }
 
-use_cores = min(num_cores, conf$max_cores)
-options("mc.cores" = use_cores)
+if (conf$parallel) {
+  use_cores = min(num_cores, conf$max_cores)
+  options("mc.cores" = use_cores)
+}
 
 if (conf$verbose) {
   # Check how many parallel workers we are using:
@@ -99,7 +101,7 @@ if (conf$debug) {
                c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.earth", "prescreen.nosq"),
-               # Doesn't work currently, g estimation never finishes.
+               # Works only if parallel = F. Do not use with mcSuperlearner!
                "SL.bartMachine",
                "SL.mean")
   #g_lib = q_lib
@@ -111,7 +113,7 @@ if (conf$debug) {
                c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.earth", "prescreen.nosq"),
-               # Doesn't work currently, g estimation never finishes.
+               # Works only if parallel = F. Do not use with mcSuperlearner!
                "SL.bartMachine",
                "SL.mean")
 }
