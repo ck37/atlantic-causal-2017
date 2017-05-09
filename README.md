@@ -6,11 +6,11 @@
 
 **Description**: Targeted minimum loss-based estimation (TMLE) was implemented using a universal least-favorable one-dimensional sub-model. The outcome regression and treatment mechanism were modeled using super learning, with a library consisting of logistic regression, gradient boosted machines, generalized additive models, multivariate adaptive regression splines, random forest, neural networks, lasso, elastic net, bayesian additive trees, and support vector machines. Covariates supplied to the Super Learner were pre-screened based on their univariate association with the outcome.
 
-**Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry, and Mark van der Laan for helpful discussion.
+**Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry, and Mark van der Laan for helpful discussions.
 
-**Expected runtime**: 120 seconds per dataset of 250 observations and 58 covariates.
+**Expected runtime**: 160 seconds per dataset of 250 observations and 58 covariates.
 
-**Notes**: We do not include inference for the unit-level causal estimates as those are not asymptotically linear parameters within the targeted learning framework. We assume no missing data in the datasets.
+**Notes**: We assume no missing data in the datasets. We do not include inference for the unit-level causal estimates as those are not asymptotically linear parameters within the targeted learning framework. 
 
 ## Requirements
 
@@ -31,7 +31,7 @@ Minimal
 * Modify targeted_learning.R settings at the top of the file if necessary.
 * ./targeted_learning.R inputData outfile1 outfile2
 
-Analysis of 2016 or 2017 data
+Analysis of 2016 or 2017-pre data
 
 * Unzip [2017 data](http://faculty.chicagobooth.edu/richard.hahn/pre_data.tar.gz) into `inbound/pre_data/`
 * Unzip [2016 data](https://drive.google.com/file/d/0B8TUkApaUlsGekFSblJWa25NM1E/edit) into `inbound/data-2016/`
