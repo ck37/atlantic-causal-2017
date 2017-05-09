@@ -88,23 +88,36 @@ if (conf$verbose) {
 
 # This is the Q and g library.
 if (conf$debug) {
-  SL.library = c("SL.glm", "SL.mean")
+  q_lib = c("SL.glm", "SL.mean")
+  g_lib = q_lib
 } else {
-  SL.library <- list(c("SL.glm", "All",  "prescreen.nosq"),
-                     # Not working, can we fix it?
-                     # c("SL.gam", "All", "prescreen.nosq"),
-                     #c("sg.gbm.2500", "prescreen.nocat"),
-                     "SL.xgboost",
-                     "SL.randomForest",
-                     "SL.glmnet",
-                     "SL.nnet",
-                     c("SL.earth", "prescreen.nosq"),
-                     "SL.bartMachine",
-                     "SL.mean")
+  q_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
+               #c("SL.mgcv", "All", "prescreen.nosq"),
+               #c("sg.gbm.2500", "prescreen.nocat"),
+               "SL.xgboost",
+               "SL.randomForest",
+               c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
+               c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
+               c("SL.earth", "prescreen.nosq"),
+               # Doesn't work currently, g estimation never finishes.
+               "SL.bartMachine",
+               "SL.mean")
+  #g_lib = q_lib
+  g_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
+               #c("SL.mgcv", "All", "prescreen.nosq"),
+               #c("sg.gbm.2500", "prescreen.nocat"),
+               "SL.xgboost",
+               "SL.randomForest",
+               c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
+               c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
+               c("SL.earth", "prescreen.nosq"),
+               # Doesn't work currently, g estimation never finishes.
+               "SL.bartMachine",
+               "SL.mean")
 }
 
 # Just use the same library for g and Q.
-g.SL.library = SL.library
+# g.SL.library = SL.library
 
 #if (conf$debug) {
   #g.SL.library = c("SL.glm", "SL.mean")
@@ -124,9 +137,10 @@ results = estimate_att(A = d$A,
                        Y = d$Y,
                        W = d[, -(1:2)],
                        verbose = conf$verbose,
-                       SL.library = SL.library,
-                       parallel = conf$parallel,
-                       g.SL.library = g.SL.library)
+                       SL.library = q_lib,
+                       #parallel = conf$parallel,
+                       parallel = F,
+                       g.SL.library = g_lib)
 
 
 # Extract unit-level estimates before printing.
