@@ -101,12 +101,15 @@ if (conf$debug) {
   q_lib = c("SL.glm", "SL.mean")
   g_lib = q_lib
 } else {
-  q_lib = list(# speedglm doesn't work :/ just use plain ol' glm.
+  q_lib = c(list(# speedglm doesn't work :/ just use plain ol' glm.
                c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
                #c("SL.mgcv", "All", "prescreen.nosq"),
                #c("sg.gbm.2500", "prescreen.nocat"),
                #"SL.xgboost",
-               "SL.xgboost_threads_4",
+               "SL.xgboost_threads_4"
+               # Effect modification learners can't be used with g, only Q.
+            ), sl_glmnet_em15$names,
+            list(
                #"SL.randomForest_fast",
                "SL.ranger_fast",
                c("SL.glmnet_fast", "All", "screen.corRank4", "screen.corRank8"),
@@ -114,23 +117,21 @@ if (conf$debug) {
                c("SL.earth", "prescreen.nosq"),
                # Works only if parallel = F. Do not use with mcSuperlearner!
                "SL.bartMachine",
-               "SL.mean")
-  # Copy Q lib into g lib.
-  g_lib = q_lib
-  if (F) { # not using this currently, just copy Q lib.
-    g_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
+               "SL.mean"))
+  
+  # Need a separate g lib that does not include effect modification learners.
+  g_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
                #c("SL.mgcv", "All", "prescreen.nosq"),
                #c("sg.gbm.2500", "prescreen.nocat"),
                #"SL.xgboost",
                "SL.xgboost_threads_4",
-               "SL.randomForest",
-               c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
+               "SL.ranger_fast",
+               c("SL.glmnet_fast", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.earth", "prescreen.nosq"),
                # Works only if parallel = F. Do not use with mcSuperlearner!
                "SL.bartMachine",
                "SL.mean")
-  }
 }
 
 # Just use the same library for g and Q.

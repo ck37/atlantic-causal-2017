@@ -11,11 +11,14 @@ SL.randomForest_fast = function(...) SL.randomForest(..., ntree = 200, verbose =
 # Faster ranger (itself a faster version of RF).
 SL.ranger_fast = function(...) SL.ranger(..., num.trees = 200, num.threads = 4)
 
-
+# Restrict to top 4 variables based on univariate correlation.
+# TODO: keep treatment indicator in if we're running outcome regression.
 screen.corRank4 = function(...) {
   screen.corRank(..., rank = 4)
 }
 
+# Restrict to top 8 variables based on univariate correlation.
+# TODO: keep treatment indicator in if we're running outcome regression.
 screen.corRank8 = function(...) {
   screen.corRank(..., rank = 8)
 }
