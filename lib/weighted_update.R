@@ -9,10 +9,11 @@ update <- function(initdata) {
   
   # Fit a glm with the ``clever covariate'' moved to the weight.
   # TODO: catch error and recover if fluctuation fails.
-  fit = glm(Y ~ offset(qlogis(Q.QAW)) + 1,
+  # Suppress any warnings here.
+  fit = suppressWarnings(glm(Y ~ offset(qlogis(Q.QAW)) + 1,
             weight = -HAW,
             data = initdata,
-            family = "binomial")
+            family = "binomial"))
   
   # Extract epsilon from the MLE.
   epsilon_hat = fit$coefficients[1]
