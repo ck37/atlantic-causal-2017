@@ -10,7 +10,7 @@
 
 **Expected runtime**: 160 seconds per dataset of 250 observations and 58 covariates.
 
-**Notes**: We assume no missing data in the datasets. We do not include inference for the unit-level causal estimates as those are not asymptotically linear parameters within the targeted learning framework. 
+**Notes**: We assume no missing data in the datasets. We do not include inference for the unit-level causal estimates as those are not asymptotically linear within the targeted learning framework. 
 
 ## Requirements
 
