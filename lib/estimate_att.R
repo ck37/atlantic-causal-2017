@@ -22,7 +22,7 @@ estimate_att =
            # estimate treatment and control outcomes separately.
            pooled_outcome = T,
            # Set to F to disable parallelism.
-           parallel = T,
+           parallel = F,
            # Bounds used for Y when rescaled to [0, 1].
            alpha = c(.0005, .9995),
            verbose = F,
