@@ -2,9 +2,9 @@
 
 **2017 Atlantic Causal Inference Competition**
 
-Authors: Jonathan Stiles, Chris J. Kennedy, Caleb Miles, Ivana Malenica, Nima Hejazi, Andre Waschka, Alan Hubbard, Mark van der Laan.
+Authors: Jonathan Stiles, Chris J. Kennedy, Caleb Miles, Ivana Malenica, Nima Hejazi, Andre Waschka, Alan Hubbard.
 
-Acknowledgements: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry.
+Acknowledgements: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry, and Mark van der Laan for helpful discussion.
 
 ## Requirements
 
