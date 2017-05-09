@@ -304,7 +304,8 @@ estimate_att =
       
     }
     
-    Q0W = as.matrix(m.SL.A0$library.predict[1:n,sm.SL.A0$coef!=0]) %*% m.SL.A0$coef[m.SL.A0$coef!=0]
+    # TODO: test this!
+    Q0W = as.matrix(m.SL.A0$library.predict[1:n,m.SL.A0$coef!=0]) %*% m.SL.A0$coef[m.SL.A0$coef!=0]
     # Q1W = sl_outcome$SL.predict[n + 1:n]
     Q1W = as.matrix(m.SL.A1$library.predict[n+1:n,m.SL.A1$coef!=0]) %*% m.SL.A1$coef[m.SL.A1$coef!=0]
     
