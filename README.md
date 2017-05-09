@@ -4,7 +4,7 @@
 
 **Authors**: Jonathan Stiles, Chris J. Kennedy, Caleb Miles, Ivana Malenica, Nima Hejazi, Andre Waschka, Alan Hubbard.
 
-**Description**: Targeted minimum loss-based estimation (TMLE) was implemented using a universal least-favorable one-dimensional sub-model. The outcome regression and treatment mechanism were modeled using super learning, with a library consisting of logistic regression, gradient boosted machines, generalized additive models, multivariate adaptive regression splines, random forest, neural networks, lasso, elastic net, and bayesian regression trees. Covariates supplied to the Super Learner were pre-screened based on their univariate association with the outcome.
+**Description**: Targeted minimum loss-based estimation (TMLE) was implemented using a universal least-favorable one-dimensional sub-model. The outcome regression and treatment mechanism were modeled using super learning, with a library consisting of logistic regression, gradient boosted machines, generalized additive models, multivariate adaptive regression splines, random forest, neural networks, lasso, elastic net, and bayesian additive trees. Covariates supplied to the Super Learner were pre-screened based on their univariate association with the outcome.
 
 **Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry, and Mark van der Laan for helpful discussion.
 
@@ -17,7 +17,7 @@
 * R 3.2 or later, R 3.3+ recommended.
 * Java JDK for rJava
 * R Packages:
-    * CRAN: bartMachine, caret, doMC, earth, ggplot2, glmnet, kernlab, mgcv, nnet, randomForest, RhpcBLASctl, rpart, sandwich, xgboost, xtable
+    * CRAN: bartMachine, caret, devtools, doMC, earth, ggplot2, glmnet, mgcv, nnet, randomForest, RhpcBLASctl, xgboost
     * Github: ecpolley/SuperLearner, ck37/ck37r
 * Hardware assumptions: 4 cores available for multithreaded BART and XGBoost, 16GB+ RAM, Linux/OSX operating system.
 
