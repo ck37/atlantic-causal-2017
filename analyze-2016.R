@@ -33,7 +33,7 @@ load(input_file)
 analysis = list()
 
 # Temporarily shorten for debugging purposes.
-if (T) {
+if (F) {
   files = files[1:3]
 }
 
@@ -49,6 +49,11 @@ for (filename in names(files)) {
   # Save data to a temporary csv file for use in the later system2 call.
   # Include covariate data.
   data = cbind(z = file$data$z, y = file$data$y, data_x)
+  
+  # Downsample to 250 observations if needed.
+  if (nrow(data) > 250) {
+    data = data[sample(nrow(data), 250), ]
+  }
   write.csv(data, file = csv_filename, row.names = F)
 
   out1_filename = paste0(conf$export_dir, "/", filename, "-out1.csv")
@@ -93,5 +98,5 @@ for (filename in names(files)) {
 
 save(analysis, file = paste0(conf$data_dir, "/test-2016.RData"))
 
-cat("Average minutes per analysis:",
-    round(mean(unlist(lapply(analysis, function(x) x$time[["elapsed"]])) / 60, 2)))
+cat("Average seconds per analysis:",
+    round(mean(unlist(lapply(analysis, function(x) x$time[["elapsed"]]))), 2))
