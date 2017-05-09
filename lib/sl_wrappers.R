@@ -1,5 +1,7 @@
 #------- SL wrappers --------
 
+SL.xgboost_threads_4 = function(...) SL.xgboost(..., nthread = 4)
+
 #Don't put both mgcv and gam in the library!
 SL.mgcv<-function(Y, X, newX, family, deg.gam = 2, cts.num = 4, ...) 
 {
@@ -177,9 +179,9 @@ create.SL.glmnet_em15 <- function(alpha) {
 
 create.SL.glmnet_em15(c(0,.5,1))
 
-environment(SL.glmnet_em150) <- asNamespace("SuperLearner")
-environment(SL.glmnet_em150.5) <- asNamespace("SuperLearner")
-environment(SL.glmnet_em151) <- asNamespace("SuperLearner")
+environment(SL.glmnet_em15_0) <- asNamespace("SuperLearner")
+environment(SL.glmnet_em15_0.5) <- asNamespace("SuperLearner")
+environment(SL.glmnet_em15_1) <- asNamespace("SuperLearner")
 
 SL.glm_em05 = function (Y, X, newX, family, obsWeights, ...)
 {
