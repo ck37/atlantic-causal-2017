@@ -114,3 +114,11 @@ prescreen.uni <- function(Y, A, X, alpha = .05, min = 5, ...){
   }
   return(keep)
 }
+
+screen.corRank4 = function(...) {
+  screen.corRank(..., rank = 4)
+}
+
+screen.corRank8 = function(...) {
+  screen.corRank(..., rank = 8)
+}
