@@ -64,18 +64,29 @@ if (conf$sl_lib_type == "simple") {
   q_lib = c("SL.mean", "SL.glmnet")
   g_lib = c("SL.mean", "SL.glmnet")
 } else {
-  q_lib = list(c("SL.glm", "All",  "prescreen.nosq"),
-                 c("SL.mgcv", "All", "prescreen.nosq"),
+  q_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
+                 #c("SL.mgcv", "All", "prescreen.nosq"),
                  #c("sg.gbm.2500", "prescreen.nocat"),
                  "SL.xgboost",
                  "SL.randomForest",
-                 "SL.glmnet",
-                 "SL.nnet",
+                 c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
+                 c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
                  c("SL.earth", "prescreen.nosq"),
                  # Doesn't work currently, g estimation never finishes.
-                 #"SL.bartMachine",
+                 "SL.bartMachine",
                  "SL.mean")
-  g_lib = q_lib
+  #g_lib = q_lib
+  g_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
+               #c("SL.mgcv", "All", "prescreen.nosq"),
+               #c("sg.gbm.2500", "prescreen.nocat"),
+               "SL.xgboost",
+               "SL.randomForest",
+               c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
+               c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
+               c("SL.earth", "prescreen.nosq"),
+               # Doesn't work currently, g estimation never finishes.
+               "SL.bartMachine",
+               "SL.mean")
 }
 
 set.seed(1, "L'Ecuyer-CMRG")
@@ -93,7 +104,7 @@ results = estimate_att(A = A,
                        SL.library = q_lib,
                        g.SL.library = g_lib,
                        pooled_outcome = T,
-                       parallel = T,
+                       parallel = F,
                        verbose = conf$verbose)
 
 # Parallel (4 cores): X seconds with stratified or pooled outcome regression.
