@@ -102,13 +102,17 @@ if (conf$debug) {
   g_lib = q_lib
 } else {
   q_lib = c(list(# speedglm doesn't work :/ just use plain ol' glm.
-               c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
+               c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq")#,
                #c("SL.mgcv", "All", "prescreen.nosq"),
                #c("sg.gbm.2500", "prescreen.nocat"),
                #"SL.xgboost",
-               "SL.xgboost_threads_4"
+               #"SL.xgboost_threads_4"
                # Effect modification learners can't be used with g, only Q.
-            ), sl_glmnet_em15$names,
+            ),
+            # create.Learner() grids.
+            sl_glmnet_em15$names,
+            sl_xgb$names,
+            sl_ksvm$names, 
             list(
                #"SL.randomForest_fast",
                "SL.ranger_fast",
@@ -120,18 +124,22 @@ if (conf$debug) {
                "SL.mean"))
   
   # Need a separate g lib that does not include effect modification learners.
-  g_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
+  g_lib = c(list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
                #c("SL.mgcv", "All", "prescreen.nosq"),
                #c("sg.gbm.2500", "prescreen.nocat"),
                #"SL.xgboost",
-               "SL.xgboost_threads_4",
-               "SL.ranger_fast",
+               #"SL.xgboost_threads_4",
+               "SL.ranger_fast"#,
+              ), # create.Learner() grids.
+            sl_xgb$names,
+            sl_ksvm$names, 
+            list(
                c("SL.glmnet_fast", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.earth", "prescreen.nosq"),
                # Works only if parallel = F. Do not use with mcSuperlearner!
                "SL.bartMachine",
-               "SL.mean")
+               "SL.mean"))
 }
 
 # Just use the same library for g and Q.

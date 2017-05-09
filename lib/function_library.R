@@ -28,7 +28,7 @@ load_all_packages = function(auto_install = F, update = F, java_mem = "4g", verb
     "ggplot2",
     "glmnet",
     #"KernelKnn",
-    #"kernlab",
+    "kernlab",
     "mgcv",
     "nnet",
     #"pROC",
@@ -38,7 +38,7 @@ load_all_packages = function(auto_install = F, update = F, java_mem = "4g", verb
     #"ROCR",
     #"rpart",
     #"sandwich",
-    "speedglm",
+    #"speedglm",
     "xgboost"#,
     #"xtable"
   )
