@@ -2,7 +2,7 @@
 
 **2017 Atlantic Causal Inference Competition**
 
-**Authors**: Jonathan Stiles, Chris J. Kennedy, Caleb Miles, Ivana Malenica, Nima Hejazi, Andre Waschka, Alan Hubbard.
+**Authors**: Jonathan Levy, Chris J. Kennedy, Caleb Miles, Ivana Malenica, Nima Hejazi, Andre Waschka, Alan Hubbard.
 
 **Description**: Targeted minimum loss-based estimation (TMLE) was implemented using weighted logistic regression fluctuation. The outcome regression and treatment mechanism were modeled using super learning, with a library consisting of logistic regression, gradient boosted machines, multivariate adaptive regression splines, random forest, neural networks, lasso, elastic net, bayesian additive trees, and support vector machines. Covariates supplied to the Super Learner were pre-screened based on their univariate association with the outcome.
 
