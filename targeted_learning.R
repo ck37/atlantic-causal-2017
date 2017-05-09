@@ -65,7 +65,7 @@ d <- read.csv(inFile)
 colnames(d)[1:2] <- c("A", "Y")
 
 if (!require(SuperLearner)) stop("Cannot find package SuperLearner")
-if (!require(gam)) stop("Cannot find package gam")
+#if (!require(gam)) stop("Cannot find package gam")
 if (!require(glmnet)) stop("Cannot find package glmnet")
 if (!require(earth)) stop("Cannot find package earth")
 #if (!require(BayesTree)) stop("Cannot find package BayesTree")
@@ -108,7 +108,8 @@ if (conf$debug) {
   g_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
                #c("SL.mgcv", "All", "prescreen.nosq"),
                #c("sg.gbm.2500", "prescreen.nocat"),
-               "SL.xgboost",
+               #"SL.xgboost",
+               "SL.xgboost_threads_4",
                "SL.randomForest",
                c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
