@@ -1,5 +1,6 @@
 source("lib/weighted_update.R")
 source("lib/sl_wrappers.R")
+source("lib/ck_wrappers.R")
 source("lib/bound.R")
 source("lib/estimate_att.R")
 
@@ -187,16 +188,17 @@ SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nos
 SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
                 c("SL.nnet","prescreen.nosq","All")) 
 SL.library=list("SL.glm_em20","SL.glm_em05","SL.glmnet_em15_1","SL.glmnet_em15_0.5",
-                "SL.glmnet_em15_0") 
-g.SL.library=list(c("SL.glm","prescreen.nosq","All"), c("SL.glmnet","prescreen.nosq"),
-                  c("SL.nnet","prescreen.nosq","All")) 
+                "SL.glmnet_em15_0",c("SL.glm","prescreen.nosq","All","screen.corRank8"), c("SL.glmnet","prescreen.nosq","All","screen.corRank8"),
+                c("SL.nnet","prescreen.nosq","All","screen.corRank8")) 
+g.SL.library=list(c("SL.glm","prescreen.nosq","All","screen.corRank8"), c("SL.glmnet","prescreen.nosq","screen.corRank8"),
+                  c("SL.nnet","prescreen.nosq","All","screen.corRank8")) 
 siminfo = create_siminfo(numvarsg=15,numvarsQ=15,"trans","trans") 
 siminfo
 
 test = sim_ATT_jl(siminfo,useSL=T,SL.library=SL.library,g.SL.library=g.SL.library)
 test
-undebug(estimate_att)
-X_f[,"V21"]
+# undebug(estimate_att)
+
 # Set multicore-compatible seed.
 set.seed(1, "L'Ecuyer-CMRG")
 
@@ -213,8 +215,6 @@ set.seed(1, "L'Ecuyer-CMRG")
 # is interactions and squares of some continuous variables
 
 # Run B sims on the actual covs n = 250 from last year's data
-
-SL.library=list(c("SL.glm_em20")) 
 
 siminfo = create_siminfo(numvarsg=15,numvarsQ=15,formg="squared",formQ="trans")
 t = proc.time()
