@@ -123,8 +123,8 @@ SL.glmnet_em15 = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
   require("glmnet")
   
   # create the formula of all ems
-  form_em = paste0("A*(",paste(colnames(X),"",collapse="+"),")")
-  
+  form_em = paste0("~A*(",paste(colnames(X),collapse="+"),")")
+  form_em = formula(form_em)
   X <- model.matrix(form_em, as.data.frame(X))
   newX <- model.matrix(form_em, as.data.frame(newX))
   X = X[,-1]
@@ -138,9 +138,10 @@ SL.glmnet_em15 = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
   cutoff = .15
   min = 6
   pvalues = vapply(1:ncol(X),FUN = function(x){
+    x=3
     V = X[,x]
     if ((var(V) <= 0)|(colnames(X)[x]=="A")) p=0 else {
-      m <- glm(Y~ V,family='binomial')
+      m <- glm(Y~ V,family='gaussian')
       p <- try(summary(m)$coef[2,4], silent = TRUE)
       if (class(p) == "try-error") p=1}
     return(p)},FUN.VALUE = 1)
@@ -168,7 +169,7 @@ SL.glmnet_em15 = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
 # function to create glmnets with various alpha values (ridge-lasso balance)
 create.SL.glmnet_em15 <- function(alpha) {
   for(mm in seq(length(alpha))){
-    eval(parse(text = paste('SL.glmnet_em15', alpha[mm], '<- function(..., alpha = ', alpha[mm],
+    eval(parse(text = paste('SL.glmnet_em15_', alpha[mm], '<- function(..., alpha = ', alpha[mm],
                             ') SL.glmnet_em15(..., alpha = alpha)', sep = '')), envir = .GlobalEnv)
   }
   invisible(TRUE)
@@ -203,7 +204,7 @@ SL.glm_em05 = function (Y, X, newX, family, obsWeights, ...)
   pvalues = vapply(1:ncol(X),FUN = function(x){
     V = X[,x]
     if ((var(V) <= 0)|(colnames(X)[x]=="A")) p=0 else {
-      m <- glm(Y~ V,family='binomial')
+      m <- glm(Y~ V,family=family)
       p <- try(summary(m)$coef[2,4], silent = TRUE)
       if (class(p) == "try-error") p=1}
     return(p)},FUN.VALUE = 1)
@@ -247,7 +248,7 @@ SL.glm_em20 = function (Y, X, newX, family, obsWeights, ...)
   pvalues = vapply(1:ncol(X),FUN = function(x){
     V = X[,x]
     if ((var(V) <= 0)|(colnames(X)[x]=="A")) p=0 else {
-      m <- glm(Y~ V,family='binomial')
+      m <- glm(Y~ V,family=family)
       p <- try(summary(m)$coef[2,4], silent = TRUE)
       if (class(p) == "try-error") p=1}
     return(p)},FUN.VALUE = 1)
