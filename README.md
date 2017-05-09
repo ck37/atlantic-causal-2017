@@ -8,7 +8,7 @@
 
 **Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry, and Mark van der Laan for helpful discussion.
 
-**Expected runtime**: 90 seconds per dataset of 250 observations and 58 covariates.
+**Expected runtime**: 55 seconds per dataset of 250 observations and 58 covariates.
 
 **Notes**: We do not include inference for the unit-level causal estimates as those are not asymptotically linear parameters within the targeted learning framework. We assume no missing data in the datasets.
 
