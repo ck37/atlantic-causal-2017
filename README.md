@@ -6,7 +6,7 @@
 
 **Description**: [**UPDATE!**] Targeted minimum loss-based estimation (TMLE) was implemented using a universal least-favorable one-dimensional sub-model. The outcome regression and propensity scores were modeled using super learning, with a library consisting of logistic regression models, gradient boosted machines, generalized additive models, and regression splines. Covariates supplied to the Super Learner were pre-screened based on their univariate association with the outcome.
 
-**Acknowledgements**: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry, and Mark van der Laan for helpful discussion.
+**Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry, and Mark van der Laan for helpful discussion.
 
 **Expected runtime**: 90 seconds per dataset of 250 observations and 58 covariates.
 
