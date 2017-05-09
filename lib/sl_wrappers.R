@@ -114,3 +114,156 @@ prescreen.uni <- function(Y, A, X, alpha = .05, min = 5, ...){
   }
   return(keep)
 }
+
+# screens out vars with pvals below .15 inc ems 
+SL.glmnet_em15 = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
+                           nlambda = 100, useMin = TRUE, alpha, ...)
+{
+  require("glmnet")
+  
+  # create the formula of all ems
+  form_em = paste0("A*(",paste(colnames(X),"",collapse="+"),")")
+  
+  X <- model.matrix(form_em, as.data.frame(X))
+  newX <- model.matrix(form_em, as.data.frame(newX))
+  X = X[,-1]
+  newX = newX[,-1]
+  
+  # simplify colnames except A to insure no problems with names
+  colnames(X)[colnames(X)!="A"]=vapply(1:(ncol(X)-1),FUN=function(x) paste0("X",x),FUN.VALUE="cc")
+  colnames(newX)=colnames(X)
+  
+  # cut out those with 0 var, keep min number of vars with p-val below .25, keep A
+  cutoff = .15
+  min = 6
+  pvalues = vapply(1:ncol(X),FUN = function(x){
+    V = X[,x]
+    if ((var(V) <= 0)|(colnames(X)[x]=="A")) p=0 else {
+      m <- glm(Y~ V,family='binomial')
+      p <- try(summary(m)$coef[2,4], silent = TRUE)
+      if (class(p) == "try-error") p=1}
+    return(p)},FUN.VALUE = 1)
+  
+  keep <- pvalues <= cutoff
+  if(sum(keep) < min){
+    keep[order(pvalues)[1:min]] <- TRUE}
+  
+  X = X[,keep]
+  newX = newX[,keep]
+  
+  # proceed as in normal glmnet wrapper
+  fitCV <- glmnet::cv.glmnet(x = X, y = Y,
+                             lambda = NULL, type.measure = "deviance", nfolds = nfolds,
+                             family = 'gaussian', alpha = alpha, nlambda = nlambda)
+  pred <- predict(fitCV$glmnet.fit, newx = newX,
+                  s = ifelse(useMin,fitCV$lambda.min,fitCV$lambda.1se),
+                  type = "response")
+  fit <- list(object = fitCV, useMin = useMin)
+  class(fit) <- "SL.glmnet"
+  out <- list(pred = pred, fit = fit)
+  return(out)
+}
+
+# function to create glmnets with various alpha values (ridge-lasso balance)
+create.SL.glmnet_em15 <- function(alpha) {
+  for(mm in seq(length(alpha))){
+    eval(parse(text = paste('SL.glmnet_em15', alpha[mm], '<- function(..., alpha = ', alpha[mm],
+                            ') SL.glmnet_em15(..., alpha = alpha)', sep = '')), envir = .GlobalEnv)
+  }
+  invisible(TRUE)
+}
+
+create.SL.glmnet_em15(c(0,.5,1))
+
+environment(SL.glmnet_em150) <- asNamespace("SuperLearner")
+environment(SL.glmnet_em150.5) <- asNamespace("SuperLearner")
+environment(SL.glmnet_em151) <- asNamespace("SuperLearner")
+
+SL.glm_em05 = function (Y, X, newX, family, obsWeights, ...)
+{
+  
+  form_em = paste0("A*(",paste(colnames(X),"",collapse="+"),")")
+  
+  # create sq terms on the cont vars
+  form_em = formula(paste0("~",form_em))
+  
+  X <- model.matrix(form_em, as.data.frame(X))
+  newX <- model.matrix(form_em, as.data.frame(newX))
+  X = X[,-1]
+  newX = newX[,-1]
+  
+  # simplify colnames except A to insure no problems with names
+  colnames(X)[colnames(X)!="A"]=vapply(1:(ncol(X)-1),FUN=function(x) paste0("X",x),FUN.VALUE="cc")
+  colnames(newX)=colnames(X)
+  
+  # cut out those with 0 var, keep min number of vars (inc A) with p-val below .25, keep A
+  alpha = .05
+  min = 6
+  pvalues = vapply(1:ncol(X),FUN = function(x){
+    V = X[,x]
+    if ((var(V) <= 0)|(colnames(X)[x]=="A")) p=0 else {
+      m <- glm(Y~ V,family='binomial')
+      p <- try(summary(m)$coef[2,4], silent = TRUE)
+      if (class(p) == "try-error") p=1}
+    return(p)},FUN.VALUE = 1)
+  
+  keep <- pvalues <= alpha
+  if(sum(keep) < min){
+    keep[order(pvalues)[1:min]] <- TRUE}
+  
+  X = as.data.frame(X[,keep])
+  newX = as.data.frame(newX[,keep])
+  
+  fit.glm <- glm(Y ~ ., data = as.data.frame(X), family = family, weights = obsWeights)
+  pred <- predict(fit.glm, newdata = as.data.frame(newX), type = "response")
+  fit <- list(object = fit.glm)
+  class(fit) <- "SL.glm"
+  out <- list(pred = pred, fit = fit)
+  return(out)
+}
+environment(SL.glm_em05) <- asNamespace("SuperLearner")
+
+SL.glm_em20 = function (Y, X, newX, family, obsWeights, ...)
+{
+  
+  form_em = paste0("A*(",paste(colnames(X),"",collapse="+"),")")
+  
+  # create sq terms on the cont vars
+  form_em = formula(paste0("~",form_em))
+  
+  X <- model.matrix(form_em, as.data.frame(X))
+  newX <- model.matrix(form_em, as.data.frame(newX))
+  X = X[,-1]
+  newX = newX[,-1]
+  
+  # simplify colnames except A to insure no problems with names
+  colnames(X)[colnames(X)!="A"]=vapply(1:(ncol(X)-1),FUN=function(x) paste0("X",x),FUN.VALUE="cc")
+  colnames(newX)=colnames(X)
+  
+  # cut out those with 0 var, keep min number of vars (inc A) with p-val below .25, keep A
+  alpha = .20
+  min = 6
+  pvalues = vapply(1:ncol(X),FUN = function(x){
+    V = X[,x]
+    if ((var(V) <= 0)|(colnames(X)[x]=="A")) p=0 else {
+      m <- glm(Y~ V,family='binomial')
+      p <- try(summary(m)$coef[2,4], silent = TRUE)
+      if (class(p) == "try-error") p=1}
+    return(p)},FUN.VALUE = 1)
+  
+  keep <- pvalues <= alpha
+  if(sum(keep) < min){
+    keep[order(pvalues)[1:min]] <- TRUE}
+  
+  X = as.data.frame(X[,keep])
+  newX = as.data.frame(newX[,keep])
+  
+  fit.glm <- glm(Y ~ ., data = as.data.frame(X), family = family, weights = obsWeights)
+  pred <- predict(fit.glm, newdata = as.data.frame(newX), type = "response")
+  fit <- list(object = fit.glm)
+  class(fit) <- "SL.glm"
+  out <- list(pred = pred, fit = fit)
+  return(out)
+}
+environment(SL.glm_em20) <- asNamespace("SuperLearner")
+
