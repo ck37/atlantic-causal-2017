@@ -18,6 +18,8 @@ conf = list(
 
   # Set to T for extra output during execution.
   verbose = T,
+  
+  parallel = F,
 
   # Set auto-install to T for code to install any missing packages.
   auto_install = T,
@@ -53,7 +55,10 @@ if (conf$verbose) {
 }
 
 use_cores = min(num_cores, conf$max_cores)
-options("mc.cores" = use_cores)
+
+if (conf$parallel) {
+  options("mc.cores" = use_cores)
+}
 
 if (conf$verbose) {
   # Check how many parallel workers we are using:
@@ -64,29 +69,45 @@ if (conf$sl_lib_type == "simple") {
   q_lib = c("SL.mean", "SL.glmnet")
   g_lib = c("SL.mean", "SL.glmnet")
 } else {
-  q_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
+  q_lib = c(list(# speedglm doesn't work :/ just use plain ol' glm.
+    c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq")#,
+    #c("SL.mgcv", "All", "prescreen.nosq"),
+    #c("sg.gbm.2500", "prescreen.nocat"),
+    #"SL.xgboost",
+    #"SL.xgboost_threads_4"
+    # Effect modification learners can't be used with g, only Q.
+  ),
+  # create.Learner() grids.
+  sl_glmnet_em15$names,
+  sl_xgb$names,
+  sl_ksvm$names, 
+  list(
+    #"SL.randomForest_fast",
+    "SL.ranger_fast",
+    c("SL.glmnet_fast", "All", "screen.corRank4", "screen.corRank8"),
+    c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
+    c("SL.earth", "prescreen.nosq"),
+    # Works only if parallel = F. Do not use with mcSuperlearner!
+    "SL.bartMachine",
+    "SL.mean"))
+  
+  # Need a separate g lib that does not include effect modification learners.
+  g_lib = c(list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
                  #c("SL.mgcv", "All", "prescreen.nosq"),
                  #c("sg.gbm.2500", "prescreen.nocat"),
-                 "SL.xgboost",
-                 "SL.randomForest",
-                 c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
-                 c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
-                 c("SL.earth", "prescreen.nosq"),
-                 # Doesn't work currently, g estimation never finishes.
-                 "SL.bartMachine",
-                 "SL.mean")
-  #g_lib = q_lib
-  g_lib = list(c("SL.glm", "All", "screen.corRank4", "screen.corRank8", "prescreen.nosq"),
-               #c("SL.mgcv", "All", "prescreen.nosq"),
-               #c("sg.gbm.2500", "prescreen.nocat"),
-               "SL.xgboost",
-               "SL.randomForest",
-               c("SL.glmnet", "All", "screen.corRank4", "screen.corRank8"),
-               c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
-               c("SL.earth", "prescreen.nosq"),
-               # Doesn't work currently, g estimation never finishes.
-               "SL.bartMachine",
-               "SL.mean")
+                 #"SL.xgboost",
+                 #"SL.xgboost_threads_4",
+                 "SL.ranger_fast"#,
+  ), # create.Learner() grids.
+  sl_xgb$names,
+  sl_ksvm$names, 
+  list(
+    c("SL.glmnet_fast", "All", "screen.corRank4", "screen.corRank8"),
+    c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
+    c("SL.earth", "prescreen.nosq"),
+    # Works only if parallel = F. Do not use with mcSuperlearner!
+    "SL.bartMachine",
+    "SL.mean"))
 }
 
 set.seed(1, "L'Ecuyer-CMRG")
