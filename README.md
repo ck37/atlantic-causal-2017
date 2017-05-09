@@ -10,6 +10,8 @@
 
 **Expected runtime**: 90 seconds per dataset of 250 observations and 58 covariates.
 
+**Notes**: We do not include inference for the unit-level causal estimates as those are not asymptotically linear parameters within the targeted learning framework.
+
 ## Requirements
 
 * R 3.2 or later, R 3.3+ recommended.
