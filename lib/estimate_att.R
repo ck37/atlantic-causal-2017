@@ -49,15 +49,36 @@ estimate_att =
   if (verbose) {
     cat("estimate_att: Preprocessing data.\n")
   }
+  
+  # Remove factors with only 1 level, which will break model.matrix.
+  # This happens in analyze-2016.R for zy_8.csv.
+  # "Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) : 
+  # contrasts can be applied only to factors with 2 or more levels
+  # Calls: estimate_att ... model.matrix -> model.matrix.default -> contrasts"
+  
+  bad_factors = sapply(colnames(W), function(col) { is.factor(W[, col]) && nlevels(W[, col]) == 1 })
+  W = W[, !bad_factors]
+  if (sum(bad_factors) > 0 && verbose) {
+    cat("Removed", sum(bad_factors), "factors with only 1 level.\n")
+  }
 
   # Convert factors to dummies
-  W <- model.matrix(~ ., data = data.frame(W))
- 
-  # Remove intercept that model.matrix() added.
-  W = W[, -1]
+  W = try(model.matrix(~ ., data = data.frame(W)))
+  
+  # Attempt to catch any errors in model.matrix.
+  if ("try-error" %in% class(W)) {
+    # Fall back to data.matrix() if model.matrix() fails.
+    W = data.matrix(W)
+  } else {
+    # Remove intercept that model.matrix() added.
+    W = W[, -1]
+  }
+  
   num_cols = ncol(W) 
+  
   # Remove constant columns from W.
   nonconstant_columns = which(apply(W, MARGIN = 2, var) != 0)
+  
   # Make sure we retain matrix format.
   W = W[, nonconstant_columns, drop = F]
   if (verbose) {
