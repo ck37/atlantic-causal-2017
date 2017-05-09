@@ -301,9 +301,13 @@ estimate_att =
       print(m.SL.A1)      
       
     }
-
-    Q0W = m.SL.A0$SL.predict
-    Q1W = m.SL.A1$SL.predict
+    
+    Q0W = as.matrix(m.SL.A0$library.predict[1:n,sm.SL.A0$coef!=0]) %*% m.SL.A0$coef[m.SL.A0$coef!=0]
+    # Q1W = sl_outcome$SL.predict[n + 1:n]
+    Q1W = as.matrix(m.SL.A1$library.predict[n+1:n,m.SL.A1$coef!=0]) %*% m.SL.A1$coef[m.SL.A1$coef!=0]
+    
+    # Q0W = m.SL.A0$SL.predict
+    # Q1W = m.SL.A1$SL.predict
     QAW = ifelse(A == 1, Q1W, Q0W)
 
     Q.unbd = cbind(QAW = QAW, Q1W = Q1W, Q0W = Q0W)
@@ -356,8 +360,11 @@ estimate_att =
     }
 
     # Order of predictions is Q0W then Q1W.
-    Q0W = sl_outcome$SL.predict[1:n]
-    Q1W = sl_outcome$SL.predict[n + 1:n]
+    # Q0W = sl_outcome$SL.predict[1:n]
+    Q0W = as.matrix(sl_outcome$library.predict[1:n,sl_outcome$coef!=0]) %*% sl_outcome$coef[sl_outcome$coef!=0]
+    # Q1W = sl_outcome$SL.predict[n + 1:n]
+    Q1W = as.matrix(sl_outcome$library.predict[(n+1:n),sl_outcome$coef!=0]) %*% sl_outcome$coef[sl_outcome$coef!=0]
+    
     QAW = ifelse(A == 1, Q1W, Q0W)
 
     Q.unbd <- cbind(QAW = QAW, Q0W = Q0W, Q1W = Q1W)
