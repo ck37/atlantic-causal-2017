@@ -8,6 +8,7 @@ update <- function(initdata) {
   HAW = with(initdata, ifelse(A == 1, 0, H0W))
   
   # Fit a glm with the ``clever covariate'' moved to the weight.
+  # TODO: catch error and recover if fluctuation fails.
   fit = glm(Y ~ offset(qlogis(Q.QAW)) + 1,
             weight = -HAW,
             data = initdata,
