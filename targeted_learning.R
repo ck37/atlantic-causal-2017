@@ -78,8 +78,9 @@ if (conf$verbose) {
   cat("Cores detected:", num_cores, "\n")
 }
 
+use_cores = min(num_cores, conf$max_cores)
+
 if (conf$parallel) {
-  use_cores = min(num_cores, conf$max_cores)
   options("mc.cores" = use_cores)
 }
 
@@ -87,6 +88,13 @@ if (conf$verbose) {
   # Check how many parallel workers we are using:
   cat("Cores used:", getOption("mc.cores"), "\n")
 }
+
+if (conf$verbose) {
+  cat("Setting bartMachine cores to", use_cores, "\n")
+}
+
+# Speed up bartMachine by enabling multicore execution.
+bartMachine::set_bart_machine_num_cores(use_cores)
 
 # This is the Q and g library.
 if (conf$debug) {
