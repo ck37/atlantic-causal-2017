@@ -12,6 +12,8 @@ estimate_att =
            SL.library,
            # SL library for propensity score estimation.
            g.SL.library,
+           # Simple SL library to use when complex one fails.
+           sl_lib_simple = c("SL.mean", "SL.glmnet", "SL.randomForest", "SL.nnet"),
            # Bounding of estimated propensity score.
            gbounds = c(0.01, 0.99),
            # Cross-validation folds used by SuperLearner.
@@ -202,7 +204,7 @@ estimate_att =
     }
       g.SL2 <- try(sl_fn(Y = A,
                         X = data.frame(X),
-                        SL.library = c("SL.mean", "SL.glmnet"),
+                        SL.library = sl_lib_simple,
                         verbose = verbose,
                         family = "binomial",
                         # Stratify the CV folds to maximize power.
@@ -258,7 +260,7 @@ estimate_att =
                            X = as.data.frame(X[A0, ]),
                            # Predicted potential outcome for all observations.
                            newX = as.data.frame(X),
-                           SL.library = c("SL.mean", "SL.glmnet"),
+                           SL.library = sl_lib_simple,
                            family = family,
                            verbose = verbose,
                            cvControl = list(V = V)))
@@ -292,7 +294,7 @@ estimate_att =
                        X = as.data.frame(X[!A0,]),
                        # Predicted potential outcome for all observations.
                        newX = as.data.frame(X),
-                       SL.library = c("SL.mean", "SL.glmnet"),
+                       SL.library = sl_lib_simple,
                        family = family,
                        verbose = verbose,
                        cvControl = list(V = V))
@@ -350,10 +352,12 @@ estimate_att =
                              X = data.frame(A = A, X),
                              # Predicted potential outcome for all observations.
                              newX = pred_X,
-                             SL.library = c("SL.mean", "SL.glmnet"),
+                             SL.library = sl_lib_simple,
                              family = family,
                              verbose = verbose,
                              cvControl = list(V = V)))
+      
+      # TODO: need to check for error in sl_outcome and fall back to glm() here.
       
       cat("Outcome regression:\n")
       print(sl_outcome) 
