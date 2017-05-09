@@ -17,7 +17,7 @@
 * R 3.2 or later, R 3.3+ recommended.
 * Java JDK for rJava
 * R Packages:
-    * CRAN: bartMachine, caret, devtools, doMC, earth, ggplot2, glmnet, mgcv, nnet, ranger, RhpcBLASctl, xgboost
+    * CRAN: bartMachine, caret, devtools, doMC, earth, ggplot2, glmnet, mgcv, nnet, randomForest, ranger, RhpcBLASctl, xgboost
     * Github: ecpolley/SuperLearner, ck37/ck37r
 * Hardware assumptions: 4 cores available for multithreaded BART and XGBoost, 16GB+ RAM, Linux/OSX operating system.
 
