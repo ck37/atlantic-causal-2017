@@ -32,11 +32,13 @@ load_all_packages = function(auto_install = F, update = F, java_mem = "4g", verb
     "mgcv",
     "nnet",
     #"pROC",
-    "randomForest",
+    #"randomForest",
+    "ranger",
     "RhpcBLASctl",
     #"ROCR",
     #"rpart",
     #"sandwich",
+    "speedglm",
     "xgboost"#,
     #"xtable"
   )
