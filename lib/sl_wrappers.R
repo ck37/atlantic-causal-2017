@@ -1,20 +1,7 @@
 #------- SL wrappers --------
 
-# Multithreaded version of XGBoost when using sequential SuperLearner.
-SL.xgboost_threads_4 = function(...) SL.xgboost(..., nthread = 4)
-
-# Faster glmnet.
-SL.glmnet_fast = function(...) SL.glmnet(..., nlambda = 20, nfolds = 5)
-
-# Faster randomForest.
-SL.randomForest_fast = function(...) SL.randomForest(..., ntree = 200, verbose = F)
-
-# Faster ranger (itself a faster version of RF).
-SL.ranger_fast = function(...) SL.ranger(..., num.trees = 200, num.threads = 4)
-
-#Don't put both mgcv and gam in the library!
-SL.mgcv<-function(Y, X, newX, family, deg.gam = 2, cts.num = 4, ...) 
-{
+# Don't put both mgcv and gam in the library!
+SL.mgcv<-function(Y, X, newX, family, deg.gam = 2, cts.num = 4, ...) {
   SuperLearner:::.SL.require("mgcv")
   if ("gam" %in% loadedNamespaces()) 
     warning("mgcv and gam packages are both in use. You might see an error because both packages use the same function names.")
@@ -43,6 +30,7 @@ SL.mgcv<-function(Y, X, newX, family, deg.gam = 2, cts.num = 4, ...)
 }
 
 
+# Not being used, should be moved into archive.
 SL.bart <- function(Y, X, newX, family, printevery = 100000, keeptrainfits = FALSE, ...) {
   SuperLearner:::.SL.require("dbarts")
   fit.bart <- bart(x.train = X, y.train = Y, x.test = newX, printevery = printevery, keeptrainfits = keeptrainfits,
@@ -58,6 +46,7 @@ SL.bart <- function(Y, X, newX, family, printevery = 100000, keeptrainfits = FAL
   return(out)
 }
 
+# Not being used, should be moved into archive.
 sg.gbm.2500 <- function (Y, X, newX, family, obsWeights, gbm.trees = 2500,
                          interaction.depth = 2, ...) {
   SuperLearner:::.SL.require("gbm")
@@ -187,11 +176,13 @@ create.SL.glmnet_em15 <- function(alpha) {
   invisible(TRUE)
 }
 
+# TODO: convert to create.Learner()
 create.SL.glmnet_em15(c(0,.5,1))
 
 environment(SL.glmnet_em15_0) <- asNamespace("SuperLearner")
 environment(SL.glmnet_em15_0.5) <- asNamespace("SuperLearner")
 environment(SL.glmnet_em15_1) <- asNamespace("SuperLearner")
+sl_glmnet_em15 = list(names = c("SL.glmnet_em15_0", "SL.glmnet_em15_0.5", "SL.glmnet_em15_1"))
 
 SL.glm_em05 = function (Y, X, newX, family, obsWeights, ...)
 {
@@ -281,11 +272,3 @@ SL.glm_em20 = function (Y, X, newX, family, obsWeights, ...)
 }
 environment(SL.glm_em20) <- asNamespace("SuperLearner")
 
-
-screen.corRank4 = function(...) {
-  screen.corRank(..., rank = 4)
-}
-
-screen.corRank8 = function(...) {
-  screen.corRank(..., rank = 8)
-}
