@@ -76,6 +76,7 @@ for (filename in names(files)) {
           #stdout = "", stderr = "")
 
   time_elapsed = proc.time() - time_start
+  cat("Time elapsed:", time_elapsed["elapsed"], "seconds.\n")
 
   # result = 0 means that the command executed successfully.
   if (!result) {
