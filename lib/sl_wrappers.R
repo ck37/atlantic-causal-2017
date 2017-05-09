@@ -115,6 +115,7 @@ prescreen.uni <- function(Y, A, X, alpha = .05, min = 5, ...){
   return(keep)
 }
 
+
 # screens out vars with pvals below .15 inc ems 
 SL.glmnet_em15 = function (Y, X, newX, family, obsWeights, id, nfolds = 10,
                            nlambda = 100, useMin = TRUE, alpha, ...)
@@ -267,3 +268,11 @@ SL.glm_em20 = function (Y, X, newX, family, obsWeights, ...)
 }
 environment(SL.glm_em20) <- asNamespace("SuperLearner")
 
+
+screen.corRank4 = function(...) {
+  screen.corRank(..., rank = 4)
+}
+
+screen.corRank8 = function(...) {
+  screen.corRank(..., rank = 8)
+}

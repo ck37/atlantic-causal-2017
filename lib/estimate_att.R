@@ -213,13 +213,16 @@ estimate_att =
           cat("Both simple and complex SL failed for g, falling back to glm().\n")
         }
           g1W <- predict(glm(A ~ X, family = "binomial"), type = "response")
+      } else {
+        cat("Propensity score SuperLearner results:\n")
+        print(g.SL2)
+        g1W <- g.SL2$SL.predict
       }
-        } else {
-          cat("Propensity score SuperLearner results:\n")
-          print(g.SL)
-
-          g1W <- g.SL$SL.predict
-        }
+  } else {
+    cat("Propensity score SuperLearner results:\n")
+    print(g.SL)
+    g1W <- g.SL$SL.predict
+ }
 
   # Bound g away from 0, 1.
   g1W <- .bound(g1W, gbounds)
