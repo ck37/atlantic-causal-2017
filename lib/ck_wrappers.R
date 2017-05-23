@@ -1,7 +1,55 @@
+SL.xgb = function(Y, X, newX, family, obsWeights, id, ntrees = 1000,
+                      max_depth=4, shrinkage=0.1, minobspernode=10, params = list(),
+                      nthread = 1, verbose = 0,
+                      ...) {
+  SuperLearner:::.SL.require("xgboost")
+  if(packageVersion("xgboost") < 0.6) stop("SL.xgboost requires xgboost version >= 0.6, try help(\'SL.xgboost\') for details")
+  # X needs to be converted to a matrix first, then an xgb.DMatrix.
+  if (!is.matrix(X)) {
+    X = model.matrix(~ . - 1, X)
+  }
+  
+  # Convert to an xgboost compatible data matrix, using the sample weights.
+  xgmat = xgboost::xgb.DMatrix(data = X, label = Y, weight = obsWeights)
+  
+  # TODO: support early stopping, which requires a "watchlist". See ?xgb.train
+  
+  if (family$family == "gaussian") {
+    model = xgboost::xgboost(data = xgmat, objective="reg:linear", nrounds = ntrees,
+                             max_depth = max_depth, minchildweight = minobspernode, eta = shrinkage,
+                             verbose = verbose, nthread = nthread, params = params,
+                             save_period = NULL)
+  }
+  if (family$family == "binomial") {
+    model = xgboost::xgboost(data = xgmat, objective="binary:logistic", nrounds = ntrees,
+                             max_depth = max_depth, minchildweight = minobspernode, eta = shrinkage,
+                             verbose = verbose, nthread = nthread, params = params,
+                             save_period = NULL)
+  }
+  if (family$family == "multinomial") {
+    # TODO: test this.
+    model = xgboost::xgboost(data = xgmat, objective="multi:softmax", nrounds = ntrees,
+                             max_depth = max_depth, minchildweight = minobspernode, eta = shrinkage,
+                             verbose = verbose, num_class = length(unique(Y)), nthread = nthread,
+                             params = params, save_period = NULL)
+  }
+  
+  # Newdata needs to be converted to a matrix first, then an xgb.DMatrix.
+  if (!is.matrix(newX)) {
+    newX = model.matrix(~ . - 1, newX)
+  }
+  
+  pred = predict(model, newdata = newX)
+  
+  fit = list(object = model)
+  class(fit) = c("SL.xgboost")
+  out = list(pred = pred, fit = fit)
+  return(out)
+}
 
 # Multiple versions of XGBoost if we can afford the extra computation.
 # Keep the grid pretty small: 6 learners.
-sl_xgb = create.Learner("SL.xgboost", detailed_names = T,
+sl_xgb = create.Learner("SL.xgb", detailed_names = T,
                         params = list(nthread = 4, ntrees = 1000),
                         tune = list(max_depth = c(2, 4),
                                     shrinkage = c(0.05, 0.1, 0.2)))
