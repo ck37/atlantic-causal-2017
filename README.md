@@ -19,7 +19,7 @@
 * R Packages:
     * CRAN: bartMachine, caret, devtools, doMC, earth, ggplot2, glmnet, kernlab, mgcv, nnet, randomForest, ranger, RhpcBLASctl, xgboost
     * Github: ecpolley/SuperLearner, ck37/ck37r
-* Hardware assumptions: 4 cores available for multithreaded BART and XGBoost, 16GB+ RAM, Linux/OSX operating system.
+* Hardware assumptions: 4 CPU cores available for multithreaded algorithms (BART, Ranger, XGBoost), 16GB+ RAM, and a unix-based operating system.
 
 
 ## How to run
