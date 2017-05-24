@@ -112,7 +112,8 @@ if (conf$debug) {
             # create.Learner() grids.
             sl_glmnet_em15$names,
             sl_xgb$names,
-            sl_ksvm$names, 
+            # Temporarily turn off SVM due to errors Vince is getting.
+            #sl_ksvm$names, 
             list(
                #"SL.randomForest_fast",
                "SL.ranger_fast",
@@ -132,7 +133,8 @@ if (conf$debug) {
                "SL.ranger_fast"#,
               ), # create.Learner() grids.
             sl_xgb$names,
-            sl_ksvm$names, 
+            # Temporarily turn off SVM due to errors Vince is getting.
+            #sl_ksvm$names, 
             list(
                c("SL.glmnet_fast", "All", "screen.corRank4", "screen.corRank8"),
                c("SL.nnet", "All", "screen.corRank4", "screen.corRank8"),
