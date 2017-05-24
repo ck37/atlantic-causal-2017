@@ -6,7 +6,7 @@
 
 **Description**: Targeted minimum loss-based estimation (TMLE) was implemented using weighted logistic regression fluctuation. The outcome regression and treatment mechanism were modeled using super learning, with a library consisting of logistic regression, gradient boosted machines, multivariate adaptive regression splines, random forest, neural networks, lasso, elastic net, bayesian additive trees, and support vector machines. Covariates supplied to the Super Learner were pre-screened based on their univariate association with the outcome.
 
-**Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her 2016 entry, and Mark van der Laan for helpful discussions.
+**Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for sharing the source code from her & Mark's 2016 entry, and Mark van der Laan for helpful discussions.
 
 **Expected runtime**: 160 seconds per dataset of 250 observations and 58 covariates.
 
@@ -51,5 +51,3 @@ Analysis of 2016 or 2017-pre data
 * Output - log output files from Savio jobs  etc.
 * Scripts - shell (BASH) scripts.
 * Simulations - simulation studies.
-* Tex - tex output
-* Writeup - analysis reports and memos
