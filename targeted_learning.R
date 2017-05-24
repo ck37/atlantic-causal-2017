@@ -28,7 +28,17 @@ conf = list(
   parallel = F,
 
   # Use up to this many cores if available.
-  max_cores = 4
+  max_cores = 4,
+  
+  # Maximum amount of memory to allow rJava heap to use for bartMachine.
+  java_mem = "4g",
+  
+  # Number of rows to trigger larger java memory allocation.
+  large_data_rows = 1000,
+  
+  # Higher java memory setting when dataset has more rows than
+  # conf$large_data_rows . This is intended to avoid out-of-memory errors.
+  java_large_mem = "16g"
 )
 
 args <- commandArgs(TRUE)
@@ -39,11 +49,6 @@ if (length(args) != 3) {
 }
 
 source("lib/function_library.R")
-
-load_all_packages(auto_install = conf$auto_install, verbose = conf$verbose)
-
-# Load all .R files in the lib directory.
-ck37r::load_all_code("lib", verbose = conf$verbose)
 
 ##############################
 # Parse command-line arguments.
@@ -59,6 +64,30 @@ outFile2 <- args[[3]]
 if (!file.exists(inFile)) stop("Cannot find '", inFile, "'")
 
 d <- read.csv(inFile)
+
+# Check for larger dataset and allocate more RAM to Java for bartMachine.
+if (nrow(d) > conf$large_data_rows) {
+  
+  # Switch to large memory heap size for rJava.
+  conf$java_mem = conf$java_large_mem
+  
+  if (conf$verbose) {
+    cat("Found larger data file",
+        paste0("(", prettyNum(nrow(d), big.mark = ","), " rows)."),
+        "Allocating", conf$java_mem, "ram to java for bartMachine.\n")
+  }
+}
+
+#####################################
+
+load_all_packages(auto_install = conf$auto_install,
+                  verbose = conf$verbose,
+                  java_mem = conf$java_mem)
+
+# Load all .R files in the lib directory.
+ck37r::load_all_code("lib", verbose = conf$verbose)
+
+
 
 # The first column is treatment indicator A and the second column is the
 # continuous outcome.
