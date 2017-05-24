@@ -72,6 +72,18 @@ _Analysis of 2016 or 2017-pre data_:
 * Scripts - shell (BASH) scripts.
 * Simulations - simulation studies.
 
+## Troubleshooting
+
+Please feel free to post any issues to the issue queue or email us.
+
+#### rJava issues
+
+There can be issues installing and using rJava for bartMachine. If necessary, one edit from Vince Dorie for cluster usage is to manually load libjvm.so:
+```r
+# Update this path to the appropriate one for your system.
+dyn.load("/usr/lib/jvm/java-1.8.0-ibm-1.8.0.3.10-1jpp.2.el7_2.x86_64/jre/lib/amd64/compressedrefs/libjvm.so")
+```
+
 ## License
 
 &copy; 2017 Jonathan Levy, Chris J. Kennedy, Caleb H. Miles, Ivana Malenica,
