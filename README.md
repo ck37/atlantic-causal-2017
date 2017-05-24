@@ -1,9 +1,15 @@
 # Targeted Learning for the Sample Average Treatment Effect on Treated Units (SATT) [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
-**2017 Atlantic Causal Inference Competition**
+**[2017 Atlantic Causal Inference Conference Data Analysis
+Challenge](https://causal.unc.edu/files/2017/05/SecondAnnualCausalInferenceDataAnalysisChallenge.pdf)**
 
-**Authors**: Jonathan Levy, Chris J. Kennedy, Caleb H. Miles, Ivana Malenica,
-Nima Hejazi, Andre Kurepa Waschka, Alan E. Hubbard.
+**Authors**: [Jonathan Levy](https://github.com/jlstiles), [Chris J.
+Kennedy](https://github.com/ck37), [Caleb H.
+Miles](https://github.com/calebhmiles), [Ivana
+Malenica](https://github.com/podTockom),
+[Nima Hejazi](https://github.com/nhejazi), [Andre Kurepa
+Waschka](https://github.com/akwaschka), and [Alan E.
+Hubbard](http://hubbard.berkeley.edu/).
 
 **Description**: Targeted minimum loss-based estimation (TMLE) was implemented
 using weighted logistic regression fluctuation. The outcome regression and
@@ -80,7 +86,7 @@ _Analysis of 2016 or 2017-pre data_:
 ## License
 
 &copy; 2017 Jonathan Levy, Chris J. Kennedy, Caleb H. Miles, Ivana Malenica,
-Nima Hejazi, Andre Kurepa Waschka, Alan E. Hubbard.
+Nima Hejazi, Andre Kurepa Waschka, and Alan E. Hubbard.
 
 The contents of this repository are distributed under the MIT license. See file
 `LICENSE` for details.
