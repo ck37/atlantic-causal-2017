@@ -1,7 +1,7 @@
 # Targeted Learning for the Sample Average Treatment Effect on Treated Units (SATT)
 
 **2017 Atlantic Causal Inference Conference Data Analysis
-Challenge** [pdf](https://causal.unc.edu/files/2017/05/SecondAnnualCausalInferenceDataAnalysisChallenge.pdf)
+Challenge** [(pdf)](https://causal.unc.edu/files/2017/05/SecondAnnualCausalInferenceDataAnalysisChallenge.pdf)
 
 **Authors**: [Jonathan Levy](https://github.com/jlstiles), [Chris J.
 Kennedy](https://github.com/ck37), [Caleb H.
