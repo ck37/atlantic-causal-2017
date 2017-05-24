@@ -15,10 +15,7 @@ Hubbard](http://hubbard.berkeley.edu/).
 using weighted logistic regression fluctuation. The outcome regression and
 treatment mechanism were modeled using super learning, with a library consisting
 of logistic regression, gradient boosted machines, multivariate adaptive
-regression splines, random forest, neural networks, lasso, elastic net, bayesian
-additive trees, and support vector machines. Covariates supplied to the [Super
-Learner](https://github.com/ecpolley/SuperLearner) were pre-screened based on
-their univariate association with the outcome.
+regression splines, random forest, neural networks, lasso, elastic net, and bayesian additive trees. Covariates supplied to the [SuperLearner](https://github.com/ecpolley/SuperLearner) were pre-screened based on their univariate association with the outcome.
 
 **Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for
 sharing the source code from her & Mark's 2016 competition entry. We also
