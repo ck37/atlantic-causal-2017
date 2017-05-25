@@ -63,7 +63,6 @@ _Analysis of 2016 or 2017-pre data_:
 
 ## Subdirectory layout
 
-* Archive - old source code that is saved for reference.
 * Data - working RData files generated during analysis, not tracked via git.
 * Exports - exported files (cvs, tsvs, etc.) that are not tracked via git.
 * Inbound - input datasets that are not tracked via git.
