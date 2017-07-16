@@ -12,7 +12,7 @@ Waschka](https://github.com/akwaschka), and [Alan E.
 Hubbard](http://hubbard.berkeley.edu/).
 
 **Description**: Targeted minimum loss-based estimation (TMLE) was implemented
-using weighted logistic regression fluctuation. The outcome regression and
+using weighted logistic regression fluctuation. The pooled outcome regression and
 treatment mechanism were modeled using super learning, with a library consisting
 of logistic regression, gradient boosted machines, multivariate adaptive
 regression splines, random forest, neural networks, lasso, elastic net, and bayesian additive trees. Covariates supplied to the [SuperLearner](https://github.com/ecpolley/SuperLearner) were pre-screened based on their univariate association with the outcome.
@@ -88,6 +88,8 @@ dyn.load("/usr/lib/jvm/java-1.8.0-ibm-1.8.0.3.10-1jpp.2.el7_2.x86_64/jre/lib/amd
 Balzer, L. B., Petersen, M. L., & Laan, M. J. (2016). [Targeted estimation and inference for the sample average treatment effect in trials with and without pair‐matching](http://onlinelibrary.wiley.com/doi/10.1002/sim.6965/full). Statistics in medicine, 35(21), 3717-3732.
 
 Chipman, H. A., George, E. I., & McCulloch, R. E. (2010). [BART: Bayesian additive regression trees](http://projecteuclid.org/euclid.aoas/1273584455). The Annals of Applied Statistics, 4(1), 266-298.
+
+Dorie, V., Hill, J., Shalit, U., Scott, M., & Cervone, D. (2017). [Automated versus do-it-yourself methods for causal inference: Lessons learned from a data analysis competition](https://arxiv.org/abs/1707.02641). arXiv preprint arXiv:1707.02641.
 
 Green, D. P., & Kern, H. L. (2012). [Modeling heterogeneous treatment effects in survey experiments with Bayesian additive regression trees](https://academic.oup.com/poq/article/76/3/491/1893905/Modeling-Heterogeneous-Treatment-Effects-in-Survey). Public opinion quarterly, nfs036.
 
