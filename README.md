@@ -41,8 +41,6 @@ linear within the targeted learning framework.
 * Hardware assumptions: 4 CPU cores available for multi-threaded algorithms
     (BART, Ranger, XGBoost), 16GB+ RAM, and a UNIX-based operating system.
 
----
-
 ## How to run
 
 _Minimal_:
