@@ -14,7 +14,7 @@ Hubbard](http://hubbard.berkeley.edu/).
 **Description**: Targeted minimum loss-based estimation (TMLE) was implemented
 using weighted logistic regression fluctuation. The pooled outcome regression and
 treatment mechanism were modeled using super learning, with a library consisting
-of logistic regression, gradient boosted machines, multivariate adaptive
+of logistic regression, gradient boosted machines (6 configurations), multivariate adaptive
 regression splines, random forest, neural networks, lasso, elastic net, and bayesian additive trees. Covariates supplied to the [SuperLearner](https://github.com/ecpolley/SuperLearner) were pre-screened based on their univariate association with the outcome.
 
 **Acknowledgments**: We thank Susan Gruber for theoretical inspiration and for
